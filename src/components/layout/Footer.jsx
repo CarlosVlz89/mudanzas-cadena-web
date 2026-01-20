@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Facebook, Instagram } from 'lucide-react';
 
 const Footer = () => {
@@ -63,6 +64,11 @@ const Footer = () => {
 
         <div className="border-t border-gray-800 pt-6 text-center text-xs text-gray-500">
           <p>&copy; {new Date().getFullYear()} Mudanzas Cadena. Todos los derechos reservados.</p>
+        </div>
+        <div className="flex justify-center gap-4 text-xs opacity-50 hover:opacity-100 transition-opacity">
+          <Link to="/admin" className="hover:text-white">Acceso Administrativo</Link>
+          <span>|</span>
+          <Link to="/trabajadores" className="hover:text-white">Acceso Operadores</Link>
         </div>
       </div>
     </footer>

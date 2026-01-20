@@ -30,14 +30,12 @@ const Navbar = () => {
             <Link to="/rastreo" className="text-gray-600 hover:text-cadena-blue font-medium transition">Rastreo</Link>
             
             {/* Botón de Llamada a la Acción */}
-            <a 
-              href="/cotizar" 
-              target="_blank"
-              className="bg-cadena-blue text-white px-5 py-2.5 rounded-full font-bold hover:bg-ocean-dark transition flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            <Link 
+              to="/cotizar" 
+              className="bg-cadena-blue text-white px-5 py-2.5 rounded-full font-bold hover:bg-ocean-dark transition flex items-center gap-2 shadow-lg"
             >
-              <Phone size={18} />
               Cotizar Ahora
-            </a>
+            </Link>
           </div>
 
           {/* BOTÓN MENÚ MÓVIL (Hamburguesa) */}
@@ -56,9 +54,9 @@ const Navbar = () => {
             <Link to="/" className="block px-3 py-2 text-cadena-dark font-medium hover:bg-gray-50">Inicio</Link>
             <Link to="/servicios" className="block px-3 py-2 text-cadena-dark font-medium hover:bg-gray-50">Servicios</Link>
             <Link to="/rastreo" className="block px-3 py-2 text-cadena-dark font-medium hover:bg-gray-50">Rastreo</Link>
-            <Link to="/cotizar" className="bg-cadena-blue text-white px-5 py-2.5 rounded-full font-bold hover:bg-ocean-dark transition flex items-center gap-2 shadow-lg"
+            <Link to="/cotizar" className="block w-full text-center bg-cadena-blue text-white px-5 py-3 rounded-lg font-bold hover:bg-ocean-dark transition"
+              onClick={() => setIsMenuOpen(false)} // Para que se cierre el menú al dar clic
             >
-              <Phone size={18} />
               Cotizar Ahora
             </Link>
           </div>
