@@ -31,7 +31,7 @@ const Navbar = () => {
             
             {/* Botón de Llamada a la Acción */}
             <a 
-              href="https://wa.me/529994154957" 
+              href="/cotizar" 
               target="_blank"
               className="bg-cadena-blue text-white px-5 py-2.5 rounded-full font-bold hover:bg-ocean-dark transition flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
@@ -56,9 +56,11 @@ const Navbar = () => {
             <Link to="/" className="block px-3 py-2 text-cadena-dark font-medium hover:bg-gray-50">Inicio</Link>
             <Link to="/servicios" className="block px-3 py-2 text-cadena-dark font-medium hover:bg-gray-50">Servicios</Link>
             <Link to="/rastreo" className="block px-3 py-2 text-cadena-dark font-medium hover:bg-gray-50">Rastreo</Link>
-            <a href="https://wa.me/529994154957" className="block w-full text-center mt-4 bg-cadena-pink text-white py-3 rounded-lg font-bold">
-              ¡Cotizar por WhatsApp!
-            </a>
+            <Link to="/cotizar" className="bg-cadena-blue text-white px-5 py-2.5 rounded-full font-bold hover:bg-ocean-dark transition flex items-center gap-2 shadow-lg"
+            >
+              <Phone size={18} />
+              Cotizar Ahora
+            </Link>
           </div>
         </div>
       )}

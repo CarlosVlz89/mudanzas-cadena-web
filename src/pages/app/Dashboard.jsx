@@ -3,15 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase';
-import { LogOut, PlusCircle, LayoutDashboard, MapPin, Truck, CheckCircle, X } from 'lucide-react';
+// AQUÍ ESTABA EL ERROR: Faltaba importar ClipboardList
+import { LogOut, PlusCircle, LayoutDashboard, MapPin, Truck, CheckCircle, X, ClipboardList } from 'lucide-react';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [moves, setMoves] = useState([]); // Aquí guardaremos las mudanzas
+  const [moves, setMoves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Estado para el formulario de nueva mudanza
   const [newMove, setNewMove] = useState({
     client: '',
     phone: '',
@@ -20,12 +20,8 @@ const Dashboard = () => {
     date: ''
   });
 
-  // 1. ESCUCHAR LA BASE DE DATOS EN TIEMPO REAL
   useEffect(() => {
-    // Referencia a la colección "moves" (mudanzas)
     const q = query(collection(db, "moves"), orderBy("createdAt", "desc"));
-    
-    // onSnapshot es la magia: se ejecuta cada vez que algo cambia en la BD
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const movesData = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -34,23 +30,18 @@ const Dashboard = () => {
       setMoves(movesData);
       setLoading(false);
     });
-
-    return () => unsubscribe(); // Limpieza al salir
+    return () => unsubscribe();
   }, []);
 
-  // 2. FUNCIÓN PARA CERRAR SESIÓN
   const handleLogout = async () => {
     await signOut(auth);
     navigate('/admin');
   };
 
-  // 3. FUNCIÓN PARA CREAR UNA MUDANZA
   const handleCreateMove = async (e) => {
     e.preventDefault();
     try {
-      // Generamos un folio aleatorio (Ej: MUD-4829)
       const randomFolio = 'MUD-' + Math.floor(1000 + Math.random() * 9000);
-
       await addDoc(collection(db, "moves"), {
         folio: randomFolio,
         client: newMove.client,
@@ -58,22 +49,19 @@ const Dashboard = () => {
         origin: newMove.origin,
         destination: newMove.destination,
         date: newMove.date,
-        status: 'Programada', // Estado inicial
+        status: 'Programada',
         porcentaje: 0,
         createdAt: new Date()
       });
-
-      setIsModalOpen(false); // Cerramos el modal
-      setNewMove({ client: '', phone: '', origin: '', destination: '', date: '' }); // Limpiamos form
+      setIsModalOpen(false);
+      setNewMove({ client: '', phone: '', origin: '', destination: '', date: '' });
       alert(`¡Mudanza creada! El folio es: ${randomFolio}`);
-
     } catch (error) {
       console.error("Error al crear:", error);
       alert("Hubo un error al guardar.");
     }
   };
 
-  // 4. FUNCIÓN PARA CAMBIAR ESTATUS (SIMPLIFICADA)
   const advanceStatus = async (id, currentStatus) => {
     const statusMap = {
       'Programada': { next: 'En Carga', pct: 25 },
@@ -81,7 +69,6 @@ const Dashboard = () => {
       'En Tránsito': { next: 'Finalizada', pct: 100 },
       'Finalizada': { next: 'Finalizada', pct: 100 }
     };
-
     const nextStep = statusMap[currentStatus];
     if (nextStep && currentStatus !== 'Finalizada') {
       const moveRef = doc(db, "moves", id);
@@ -110,7 +97,6 @@ const Dashboard = () => {
 
       {/* CONTENIDO */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Operaciones Activas</h1>
@@ -163,6 +149,21 @@ const Dashboard = () => {
                     {move.status}
                   </div>
                   
+                  {/* --- BOTÓN NUEVO: COPIAR LINK DE CONTRATO --- */}
+                  <button 
+                    onClick={() => {
+                      // Usamos Hash en la URL
+                      const url = `${window.location.origin}/#/contrato/${move.id}`;
+                      navigator.clipboard.writeText(url);
+                      alert("¡Link del contrato copiado! Envíalo por WhatsApp al cliente:\n" + url);
+                    }}
+                    className="text-gray-400 hover:text-green-600 transition border border-gray-200 p-2 rounded-full hover:bg-green-50"
+                    title="Copiar Link de Contrato"
+                  >
+                    <ClipboardList size={20} />
+                  </button>
+                  {/* ------------------------------------------ */}
+
                   {/* Botón para avanzar estado */}
                   {move.status !== 'Finalizada' && (
                     <button 
@@ -179,10 +180,9 @@ const Dashboard = () => {
             ))}
           </div>
         )}
-
       </div>
 
-      {/* MODAL (FORMULARIO POPUP) */}
+      {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
@@ -192,65 +192,36 @@ const Dashboard = () => {
                 <X size={24} />
               </button>
             </div>
-
             <form onSubmit={handleCreateMove} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-                <input 
-                  required 
-                  type="text" 
-                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-cadena-blue outline-none"
-                  value={newMove.client}
-                  onChange={e => setNewMove({...newMove, client: e.target.value})}
-                  placeholder="Nombre completo"
-                />
+                <input required type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-cadena-blue outline-none"
+                  value={newMove.client} onChange={e => setNewMove({...newMove, client: e.target.value})} placeholder="Nombre completo" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Origen</label>
-                  <input 
-                    required 
-                    type="text" 
-                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-cadena-blue outline-none"
-                    value={newMove.origin}
-                    onChange={e => setNewMove({...newMove, origin: e.target.value})}
-                    placeholder="Ciudad / Estado"
-                  />
+                  <input required type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-cadena-blue outline-none"
+                    value={newMove.origin} onChange={e => setNewMove({...newMove, origin: e.target.value})} placeholder="Ciudad" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Destino</label>
-                  <input 
-                    required 
-                    type="text" 
-                    className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-cadena-blue outline-none"
-                    value={newMove.destination}
-                    onChange={e => setNewMove({...newMove, destination: e.target.value})}
-                    placeholder="Ciudad / Estado"
-                  />
+                  <input required type="text" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-cadena-blue outline-none"
+                    value={newMove.destination} onChange={e => setNewMove({...newMove, destination: e.target.value})} placeholder="Ciudad" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Servicio</label>
-                <input 
-                  required 
-                  type="date" 
-                  className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-cadena-blue outline-none"
-                  value={newMove.date}
-                  onChange={e => setNewMove({...newMove, date: e.target.value})}
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                <input required type="date" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-cadena-blue outline-none"
+                  value={newMove.date} onChange={e => setNewMove({...newMove, date: e.target.value})} />
               </div>
-
-              <button 
-                type="submit" 
-                className="w-full bg-cadena-blue text-white font-bold py-3 rounded-lg hover:bg-ocean-dark transition mt-4"
-              >
+              <button type="submit" className="w-full bg-cadena-blue text-white font-bold py-3 rounded-lg hover:bg-ocean-dark transition mt-4">
                 Crear Orden de Servicio
               </button>
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 };
