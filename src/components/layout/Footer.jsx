@@ -49,11 +49,11 @@ const Footer = () => {
             <ul className="space-y-2 text-gray-300 text-sm mb-6">
               <li className="flex justify-between">
                 <span>Lunes - Domingo:</span>
-                <span className="text-white font-medium">8:00 - 22:00 hrs</span>
+                <span className="text-white font-medium">8:00 hrs - 22:00 hrs</span>
               </li>
             </ul>
             <a 
-              href="/docs/Catálogo de Servicios Mudanzas Cadena.pdf" 
+              href="/public/catalogo.pdf" 
               target="_blank"
               className="block w-full text-center border border-gray-600 text-gray-300 py-2 rounded hover:border-white hover:text-white transition text-sm"
             >
