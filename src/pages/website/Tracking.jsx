@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore'; // Importamos herramientas de BD
-import { db } from '../../config/firebase'; // Conexión a Firebase
-import { Search, MapPin, Truck, Package, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import { collection, query, where, getDocs } from 'firebase/firestore'; 
+import { db } from '../../config/firebase'; 
+import { Search, MapPin, Truck, Package, CheckCircle, AlertCircle, ArrowRight, Home } from 'lucide-react'; // Agregué 'Home'
 import mascota from '../../assets/images/mascota.png'; 
 
 const Tracking = () => {
@@ -12,8 +12,6 @@ const Tracking = () => {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    
-    // Validación básica: Si está vacío, no busques
     if (!folio.trim()) return;
 
     setLoading(true);
@@ -21,33 +19,44 @@ const Tracking = () => {
     setResult(null);
 
     try {
-      // 1. Preparamos la búsqueda: "Busca en la colección 'moves' donde el campo 'folio' sea igual a lo que escribió el usuario"
       const q = query(
         collection(db, "moves"), 
-        where("folio", "==", folio.trim().toUpperCase()) // Convertimos a mayúsculas para evitar errores
+        where("folio", "==", folio.trim().toUpperCase())
       );
 
-      // 2. Ejecutamos la búsqueda
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        // ¡ENCONTRADO! Tomamos el primer resultado
-        const docData = querySnapshot.docs[0].data();
-        setResult(docData);
+        setResult(querySnapshot.docs[0].data());
       } else {
-        // NO ENCONTRADO
-        setError('No encontramos ninguna mudanza con ese folio. Verifica que esté bien escrito (Ej: MUD-1234).');
+        setError('No encontramos ninguna mudanza con ese folio. Verifica que esté bien escrito.');
       }
 
     } catch (err) {
       console.error(err);
-      setError('Hubo un error de conexión. Intenta de nuevo más tarde.');
+      setError('Hubo un error de conexión.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Función visual para el color de la barra
+  // --- LÓGICA CORREGIDA PARA 3 PASOS ---
+  const calculateProgress = (status, dbPercent) => {
+    if (dbPercent && dbPercent > 0) return dbPercent;
+
+    switch (status) {
+      case 'Pendiente': return 5;
+      case 'Programada': return 10;
+      case 'Contrato Firmado': return 15;
+      
+      // Mapeo exacto a los 3 iconos visuales
+      case 'En Carga': return 35;     // Ilumina paso 1
+      case 'En Tránsito': return 70;  // Ilumina paso 2
+      case 'Finalizada': return 100;  // Ilumina paso 3
+      default: return 0;
+    }
+  };
+
   const getStatusColor = (status) => {
     switch(status) {
       case 'Finalizada': return 'bg-green-500';
@@ -57,10 +66,12 @@ const Tracking = () => {
     }
   };
 
+  const currentPercent = result ? calculateProgress(result.status, result.porcentaje) : 0;
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 pt-28 pb-12 px-4 sm:px-6 lg:px-8">
       
-      {/* 1. CABECERA */}
+      {/* CABECERA */}
       <div className="max-w-3xl mx-auto text-center mb-12">
         <div className="flex justify-center mb-6">
           <div className="w-24 h-24 bg-white rounded-full shadow-lg flex items-center justify-center p-2">
@@ -71,10 +82,9 @@ const Tracking = () => {
           Rastrea tu <span className="text-cadena-blue">Mudanza</span>
         </h1>
         <p className="text-gray-600 mb-8">
-          Ingresa tu número de folio (Ej: MUD-4521) para ver el estado real de tu servicio.
+          Ingresa tu número de folio para ver el estado real de tu servicio.
         </p>
 
-        {/* BUSCADOR */}
         <form onSubmit={handleSearch} className="relative max-w-md mx-auto">
           <input
             type="text"
@@ -92,20 +102,17 @@ const Tracking = () => {
           </button>
         </form>
 
-        {/* ERROR */}
         {error && (
           <div className="mt-6 p-4 bg-red-50 text-red-600 rounded-lg flex items-center justify-center gap-2 animate-pulse">
-            <AlertCircle size={20} />
-            {error}
+            <AlertCircle size={20} />{error}
           </div>
         )}
       </div>
 
-      {/* 2. RESULTADOS (Datos Reales de Firebase) */}
+      {/* RESULTADOS */}
       {result && (
         <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 animate-fade-in-up">
           
-          {/* TICKET HEADER */}
           <div className="bg-cadena-dark text-white p-6 flex justify-between items-center flex-wrap gap-4">
             <div>
               <p className="text-gray-400 text-sm">Cliente</p>
@@ -140,23 +147,50 @@ const Tracking = () => {
             <div className="mb-8">
               <div className="flex justify-between text-sm text-gray-500 mb-2">
                 <span>Estado: <strong className="text-cadena-blue">{result.status}</strong></span>
-                <span>{result.porcentaje}%</span>
+                <span>{currentPercent}%</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
                 <div 
                   className={`h-full rounded-full transition-all duration-1000 ease-out ${getStatusColor(result.status)}`}
-                  style={{ width: `${result.porcentaje}%` }}
+                  style={{ width: `${currentPercent}%` }}
                 ></div>
               </div>
             </div>
 
-            {/* PASOS */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mt-8 pt-8 border-t border-gray-100">
-              <StepItem icon={<Package />} label="Empacado" active={result.porcentaje >= 25} />
-              <StepItem icon={<Truck />} label="En Camino" active={result.porcentaje >= 50} />
-              <StepItem icon={<MapPin />} label="Llegando" active={result.porcentaje >= 80} />
-              <StepItem icon={<CheckCircle />} label="Entregado" active={result.porcentaje === 100} />
+            {/* PASOS: AHORA SON 3 PARA COINCIDIR CON LOS ESTADOS */}
+            <div className="grid grid-cols-3 gap-4 text-center mt-8 pt-8 border-t border-gray-100 relative">
+              
+              {/* Línea conectora gris de fondo (Opcional, para estilo) */}
+              <div className="absolute top-[4.5rem] left-0 w-full h-0.5 bg-gray-100 -z-10 hidden md:block"></div>
+
+              {/* Paso 1: Recolección / Carga */}
+              <StepItem 
+                icon={<Package />} 
+                label="Recolección" 
+                active={currentPercent >= 30} 
+                color="text-cadena-pink" 
+                bgColor="bg-pink-100"
+              />
+
+              {/* Paso 2: En Ruta */}
+              <StepItem 
+                icon={<Truck />} 
+                label="En Ruta" 
+                active={currentPercent >= 60} 
+                color="text-cadena-blue" 
+                bgColor="bg-blue-100"
+              />
+
+              {/* Paso 3: Entregado */}
+              <StepItem 
+                icon={<Home />} 
+                label="Entregado" 
+                active={currentPercent === 100} 
+                color="text-green-600" 
+                bgColor="bg-green-100"
+              />
             </div>
+
           </div>
         </div>
       )}
@@ -164,12 +198,14 @@ const Tracking = () => {
   );
 };
 
-const StepItem = ({ icon, label, active }) => (
-  <div className={`flex flex-col items-center gap-2 ${active ? 'text-cadena-blue' : 'text-gray-300'}`}>
-    <div className={`p-3 rounded-full ${active ? 'bg-blue-100' : 'bg-gray-100'}`}>
-      {icon}
+const StepItem = ({ icon, label, active, color, bgColor }) => (
+  <div className={`flex flex-col items-center gap-3 transition-all duration-500 ${active ? 'opacity-100 transform scale-105' : 'opacity-40 grayscale'}`}>
+    <div className={`p-4 rounded-full shadow-sm transition-colors duration-500 ${active ? bgColor : 'bg-gray-100'}`}>
+      <div className={active ? color : 'text-gray-400'}>
+        {icon}
+      </div>
     </div>
-    <span className="font-medium text-sm">{label}</span>
+    <span className={`font-bold text-sm ${active ? 'text-gray-800' : 'text-gray-400'}`}>{label}</span>
   </div>
 );
 

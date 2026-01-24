@@ -1,62 +1,128 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, Phone, Truck } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Menu, X, Truck } from 'lucide-react';
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Función inteligente con cálculo de compensación (Offset)
+  const handleNavigation = (sectionId) => {
+    setIsMenuOpen(false);
+
+    const scrollToElement = (id) => {
+      // 1. Si es "inicio", forzamos ir hasta arriba del todo (0)
+      if (id === 'inicio') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // 2. Para otras secciones, calculamos la posición y restamos la altura del menú
+      const element = document.getElementById(id);
+      if (element) {
+        const headerOffset = 100; // 80px del menú + 20px de aire
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    };
+
+    // Lógica de rutas (Si no estoy en Home, voy a Home y luego scrolleo)
+    if (location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => scrollToElement(sectionId), 100);
+    } else {
+      scrollToElement(sectionId);
+    }
+  };
+
+  // Estilos base para los botones del menú
+  const navLinkClass = "bg-transparent border-none cursor-pointer text-gray-600 hover:text-cadena-pink font-medium transition text-base";
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20">
+    <nav className="bg-white/70 backdrop-blur-lg border-b border-white/40 shadow-sm fixed w-full z-50 top-0 left-0 h-20 transition-all duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+        <div className="flex justify-between items-center h-full">
           
-          {/* LOGOTIPO */}
-          <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className="flex items-center gap-2">
-              {/* Aquí luego pondremos la imagen real del logo */}
-              <div className="w-10 h-10 bg-cadena-blue rounded-lg flex items-center justify-center text-white">
-                <Truck size={24} />
-              </div>
-              <span className="font-bold text-xl text-cadena-dark tracking-wide">
-                MUDANZAS <span className="text-cadena-pink">CADENA</span>
-              </span>
-            </Link>
-          </div>
+          {/* LOGO */}
+          <button 
+            onClick={() => handleNavigation('inicio')} 
+            className="flex items-center gap-2 cursor-pointer bg-transparent border-none outline-none group"
+          >
+            {/* Icono del Camión (Rosa) */}
+            <Truck size={36} className="text-cadena-pink transform group-hover:-translate-x-1 transition-transform duration-300" />
+            
+            {/* Texto con dos colores */}
+            <span className="font-black text-2xl tracking-tighter flex items-center gap-1">
+              <span className="text-gray-900">MUDANZAS</span> {/* Negro */}
+              <span className="text-cadena-pink">CADENA</span> {/* Rosa */}
+            </span>
+          </button>
 
           {/* MENÚ DE ESCRITORIO */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-600 hover:text-cadena-blue font-medium transition">Inicio</Link>
-            <Link to="/servicios" className="text-gray-600 hover:text-cadena-blue font-medium transition">Servicios</Link>
-            <Link to="/rastreo" className="text-gray-600 hover:text-cadena-blue font-medium transition">Rastreo</Link>
+            <button onClick={() => handleNavigation('inicio')} className={navLinkClass}>
+              Inicio
+            </button>
+            <button onClick={() => handleNavigation('servicios')} className={navLinkClass}>
+              Servicios
+            </button>
+            <button onClick={() => handleNavigation('contacto')} className={navLinkClass}>
+              Contacto
+            </button>
             
-            {/* Botón de Llamada a la Acción */}
+            {/* ENLACE DE RASTREO (Nuevo) */}
+            <Link to="/rastreo" className={navLinkClass}>
+              Rastreo
+            </Link>
+            
+            {/* Botón Cotizar */}
             <Link 
               to="/cotizar" 
-              className="bg-cadena-blue text-white px-5 py-2.5 rounded-full font-bold hover:bg-ocean-dark transition flex items-center gap-2 shadow-lg"
+              className="bg-cadena-blue text-white px-6 py-2.5 rounded-full font-bold hover:bg-ocean-dark transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               Cotizar Ahora
             </Link>
           </div>
 
-          {/* BOTÓN MENÚ MÓVIL (Hamburguesa) */}
-          <div className="flex items-center md:hidden">
-            <button onClick={() => setIsOpen(!isOpen)} className="text-gray-600 hover:text-cadena-blue">
-              {isOpen ? <X size={28} /> : <Menu size={28} />}
+          {/* HAMBURGUESA MÓVIL */}
+          <div className="md:hidden">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-600 hover:text-cadena-pink bg-transparent border-none">
+              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* MENÚ MÓVIL DESPLEGABLE */}
-      {isOpen && (
-        <div className="md:hidden bg-white border-t">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link to="/" className="block px-3 py-2 text-cadena-dark font-medium hover:bg-gray-50">Inicio</Link>
-            <Link to="/servicios" className="block px-3 py-2 text-cadena-dark font-medium hover:bg-gray-50">Servicios</Link>
-            <Link to="/rastreo" className="block px-3 py-2 text-cadena-dark font-medium hover:bg-gray-50">Rastreo</Link>
-            <Link to="/cotizar" className="block w-full text-center bg-cadena-blue text-white px-5 py-3 rounded-lg font-bold hover:bg-ocean-dark transition"
-              onClick={() => setIsMenuOpen(false)} // Para que se cierre el menú al dar clic
+      {/* MENÚ MÓVIL */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-white/80 backdrop-blur-xl border-t border-white/40 absolute w-full shadow-xl">
+          <div className="px-4 pt-2 pb-6 space-y-2">
+            <button onClick={() => handleNavigation('inicio')} className="block w-full text-left px-3 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium bg-transparent">
+              Inicio
+            </button>
+            <button onClick={() => handleNavigation('servicios')} className="block w-full text-left px-3 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium bg-transparent">
+              Servicios
+            </button>
+            <button onClick={() => handleNavigation('contacto')} className="block w-full text-left px-3 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium bg-transparent">
+              Contacto
+            </button>
+            
+            {/* ENLACE DE RASTREO MÓVIL (Nuevo) */}
+            <Link 
+              to="/rastreo" 
+              onClick={() => setIsMenuOpen(false)} 
+              className="block w-full text-left px-3 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium bg-transparent"
             >
+              Rastrea tu Mudanza
+            </Link>
+
+            <Link to="/cotizar" onClick={() => setIsMenuOpen(false)} className="block w-full text-center bg-cadena-blue text-white px-5 py-3 rounded-lg font-bold mt-4 shadow-md">
               Cotizar Ahora
             </Link>
           </div>

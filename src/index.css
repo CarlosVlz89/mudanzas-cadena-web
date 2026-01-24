@@ -53,4 +53,15 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+
+/* CLASES DE UTILIDAD PARA EL DASHBOARD */
+.inp {
+  @apply w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cadena-blue focus:border-cadena-blue outline-none transition text-sm;
+}
+.lbl {
+  @apply block text-xs font-bold text-gray-500 uppercase mb-1;
+}
+.btn-primary {
+  @apply bg-cadena-blue hover:bg-ocean-dark text-white font-bold py-3 rounded-lg transition shadow-md;
+}
 }
