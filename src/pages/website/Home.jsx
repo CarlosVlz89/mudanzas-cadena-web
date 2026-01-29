@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Clock, Heart } from 'lucide-react';
-import heroImage from '../../assets/images/hero-truck.jpg'; 
-import Services from './Services'; 
+import { ArrowRight, Shield, Clock, Heart, MessageCircle, FileText, MapPin } from 'lucide-react'; // <--- Agregué iconos nuevos
+import heroVideo from '../../assets/videos/hero-truck.mp4'
+import Services from './Services';
+import Gallery from '../../components/website/Gallery'; 
 
 const Home = () => {
   return (
@@ -19,11 +20,25 @@ const Home = () => {
       {/* --- CONTENIDO (z-10 para que quede encima de las manchas) --- */}
       <div className="relative z-10">
 
-        {/* HERO (Igual que antes) */}
-        <div id="inicio" className="relative h-[600px] flex items-center scroll-mt-24">
-          <div className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroImage})` }}>
-            <div className="absolute inset-0 bg-black/60"></div>
-          </div>
+        {/* HERO con Video de Fondo */}
+        <div id="inicio" className="relative h-[600px] flex items-center scroll-mt-24 overflow-hidden">
+  
+          {/* El Video sustituye al div con backgroundImage */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 z-0 w-full h-full object-cover"
+          >
+          <source src={heroVideo} type="video/mp4" />
+            Tu navegador no soporta videos.
+          </video>
+
+          {/* Capa oscura (Overlay) para que el texto resalte */}
+          <div className="absolute inset-0 bg-black/50 z-1"></div>
+
+          {/* Contenido del Hero */}
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left">
             <span className="inline-block py-1 px-3 rounded-full bg-cadena-pink/90 backdrop-blur-sm text-white text-sm font-bold mb-4 tracking-wider border border-white/20 shadow-lg">
               MUDANZAS Y FLETES NACIONALES
@@ -35,15 +50,40 @@ const Home = () => {
             <p className="text-xl text-gray-100 mb-8 max-w-2xl drop-shadow-md">
               Hacemos de tu mudanza algo fácil y sencillo. Más de 60 años cuidando lo que más te importa.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <a href="https://wa.me/529994154957" className="px-8 py-4 bg-cadena-blue hover:bg-ocean-dark text-white font-bold rounded-xl transition shadow-lg hover:shadow-blue-500/50">
-                Cotizar Ahora
+            
+            {/* --- NUEVA ZONA DE BOTONES (3 OPCIONES) --- */}
+            <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center sm:justify-start">
+              
+              {/* 1. COTIZAR EN WEB (Preferencia Amigo - Destacado) */}
+              <Link 
+                to="/cotizar" 
+                className="px-6 py-4 bg-cadena-pink hover:bg-pink-600 text-white font-bold rounded-xl transition shadow-lg hover:shadow-pink-500/50 flex items-center justify-center gap-2"
+              >
+                <FileText size={20} />
+                Cotizar en Línea
+              </Link>
+
+              {/* 2. COTIZAR WHATSAPP (Preferencia Mamá - Verde) */}
+              <a 
+                href="https://wa.me/529994154957" 
+                target="_blank"
+                rel="noreferrer"
+                className="px-6 py-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition shadow-lg hover:shadow-green-500/50 flex items-center justify-center gap-2"
+              >
+                <MessageCircle size={20} />
+                WhatsApp
               </a>
-              {/* Botón Cristal */}
-              <Link to="/rastreo" className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/30 hover:bg-white/20 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg">
-                Rastrear mi Mudanza <ArrowRight size={20} />
+
+              {/* 3. RASTREAR (Estilo Cristal - Secundario) */}
+              <Link 
+                to="/rastreo" 
+                className="px-6 py-4 bg-white/10 backdrop-blur-md border border-white/30 hover:bg-white/20 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg"
+              >
+                <MapPin size={20} />
+                Rastrear
               </Link>
             </div>
+
           </div>
         </div>
 
@@ -68,12 +108,16 @@ const Home = () => {
           </div>
         </div>
 
-        {/* SECCIÓN SERVICIOS (Aquí entra el otro componente) */}
+        {/* SECCIÓN SERVICIOS */}
         <section id="servicios" className="scroll-mt-24">
           <Services />
         </section>
 
-        {/* SECCIÓN FILOSOFÍA (Glass Dark) */}
+        <section id="galeria">
+           <Gallery />
+        </section>
+
+        {/* SECCIÓN FILOSOFÍA */}
         <div className="py-24">
            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
              <div className="bg-white/30 backdrop-blur-xl border border-white/60 rounded-[3rem] p-12 shadow-2xl">
@@ -86,7 +130,7 @@ const Home = () => {
                    </div>
                    <div>
                      <h3 className="text-xl font-bold text-cadena-pink mb-2">Visión</h3>
-                     <p className="text-gray-700">Llegar a cada rincón de la República Mexicana con la misma eficiencia.</p>
+                     <p className="text-gray-700">Llegar a cada rincón de la República Mexicana, ofreciendo el mismo cuidado y eficiencia en cada uno de nuestros servicios.</p>
                    </div>
                  </div>
                  <div className="h-64 bg-gradient-to-br from-cadena-blue to-purple-900 rounded-3xl shadow-inner flex items-center justify-center text-white p-8 text-center border border-white/20">

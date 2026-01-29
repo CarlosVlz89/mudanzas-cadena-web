@@ -1,11 +1,12 @@
-import { Package, Truck, Home, Building2, Car, ShieldCheck, CheckCircle2, Users, Clock, Zap, FileText, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Package, Truck, Home, Building2, Car, ShieldCheck, CheckCircle2, Users, Clock, Zap, FileText, MapPin, MessageCircle, Box } from 'lucide-react';
 import mascota from '../../assets/images/mascota.png'; 
 
 const Services = () => {
   return (
-    <div className="py-12"> 
+    <div className="py-12 bg-slate-50"> 
       
-      {/* 1. ENCABEZADO (Estilo Limpio) */}
+      {/* 1. ENCABEZADO (TUS TEXTOS ORIGINALES) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">
         <span className="bg-white/50 px-4 py-1 rounded-full text-cadena-pink font-bold tracking-widest uppercase text-xs border border-white/40 shadow-sm">
           Tipos de Servicio
@@ -18,7 +19,7 @@ const Services = () => {
         </p>
       </div>
 
-      {/* 2. LOS PROTAGONISTAS (DISEÑO GLASS + TEXTOS ANTERIORES) */}
+      {/* 2. LOS PROTAGONISTAS (TUS TEXTOS ORIGINALES) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           
@@ -44,7 +45,7 @@ const Services = () => {
               </p>
               
               <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3 text-slate-700 font-medium"><Zap size={20} className="text-yellow-500"/> Entrega rápida (24-48 hrs).</li>
+                <li className="flex items-center gap-3 text-slate-700 font-medium"><Zap size={20} className="text-yellow-500"/> Entrega rápida.</li>
                 <li className="flex items-center gap-3 text-slate-700 font-medium"><CheckCircle2 size={20} className="text-blue-400"/> Tú defines el horario.</li>
                 <li className="flex items-center gap-3 text-slate-700 font-medium"><CheckCircle2 size={20} className="text-blue-400"/> Espacio exclusivo para ti.</li>
               </ul>
@@ -61,7 +62,7 @@ const Services = () => {
                   <Users size={32} />
                 </div>
                 <span className="bg-cadena-pink/10 text-cadena-pink text-xs font-bold px-3 py-1 rounded-full border border-pink-100 uppercase">
-                  Ahorra hasta 40%
+                  Ahorra
                 </span>
               </div>
               
@@ -83,29 +84,66 @@ const Services = () => {
         </div>
       </div>
 
-      {/* 3. COMPLEMENTARIOS (Glass Mini Cards + Textos Anteriores) */}
+      {/* 3. SOLUCIONES ESPECIALIZADAS (NUEVO DISEÑO LLAMATIVO - MISMOS TEXTOS) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
         <div className="text-center mb-12">
-          <h3 className="text-2xl font-bold text-slate-800">Soluciones Especializadas</h3>
-          <p className="text-slate-500">Todo lo que necesitas para completar tu traslado.</p>
+          <h3 className="text-3xl font-extrabold text-slate-800">Soluciones Especializadas</h3>
+          <p className="text-slate-500 mt-2">Todo lo que necesitas para completar tu traslado.</p>
         </div>
+        
+        {/* TARJETAS PREMIUM (Blanco Sólido + Sombra de Color) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { icon: <Building2/>, title: "Corporativo", desc: "Logística para oficinas sin detener tu operación." },
-            { icon: <Car/>, title: "Traslado de Autos", desc: "Llevamos tu coche sin rodar (Madrina/Caja)." },
-            { icon: <Package/>, title: "Empaque", desc: "Cajas, playo y burbuja para cuidar lo frágil." },
-            { icon: <ShieldCheck/>, title: "Seguro de Carga", desc: "Póliza contra todo riesgo (CHUBB, AIG)." }
+            { 
+              icon: <Building2 size={28}/>, 
+              title: "Corporativo", 
+              desc: "Logística para oficinas sin detener tu operación.",
+              color: "bg-blue-500",
+              shadow: "shadow-blue-200",
+              bg: "bg-blue-50"
+            },
+            { 
+              icon: <Car size={28}/>, 
+              title: "Traslado de Autos", 
+              desc: "Llevamos tu coche sin rodar (Madrina/Caja).",
+              color: "bg-purple-500",
+              shadow: "shadow-purple-200",
+              bg: "bg-purple-50"
+            },
+            { 
+              icon: <Box size={28}/>, 
+              title: "Empaque", 
+              desc: "Cajas, playo y burbuja para cuidar lo frágil.",
+              color: "bg-orange-500",
+              shadow: "shadow-orange-200",
+              bg: "bg-orange-50"
+            },
+            { 
+              icon: <ShieldCheck size={28}/>, 
+              title: "Seguro de Carga", 
+              desc: "Póliza contra todo riesgo (CHUBB, AIG).",
+              color: "bg-green-500",
+              shadow: "shadow-green-200",
+              bg: "bg-green-50"
+            }
           ].map((item, i) => (
-            <div key={i} className="bg-white/30 backdrop-blur-md p-6 rounded-2xl border border-white/40 hover:bg-white/50 transition duration-300">
-              <div className="text-slate-400 mb-3">{item.icon}</div>
-              <h4 className="font-bold text-slate-800 mb-1">{item.title}</h4>
-              <p className="text-xs text-slate-600 font-medium leading-relaxed">{item.desc}</p>
+            <div key={i} className="group bg-white rounded-3xl p-6 border border-slate-100 hover:border-transparent hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 relative overflow-hidden">
+              {/* Efecto de fondo degradado al pasar el mouse */}
+              <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br ${item.bg} to-transparent pointer-events-none`}></div>
+              
+              <div className="relative z-10 text-center">
+                <div className={`w-14 h-14 mx-auto ${item.color} text-white rounded-2xl flex items-center justify-center shadow-lg ${item.shadow} mb-4 transform group-hover:scale-110 transition-transform duration-300`}>
+                  {item.icon}
+                </div>
+                <h4 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-black">{item.title}</h4>
+                <p className="text-sm text-slate-500 font-medium leading-relaxed group-hover:text-slate-700">{item.desc}</p>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 4. SECCIÓN FINAL (DISEÑO GLASS + ESTRUCTURA IZQ/DER ANTERIOR) */}
+      {/* 4. SECCIÓN FINAL (TUS TEXTOS ORIGINALES + DOBLE BOTÓN) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-[3rem] p-8 md:p-12 shadow-2xl relative overflow-hidden">
           
@@ -114,45 +152,63 @@ const Services = () => {
 
           <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             
-            {/* IZQUIERDA: BENEFICIOS (Textos Exactos Anteriores) */}
+            {/* IZQUIERDA: BENEFICIOS (TEXTOS ORIGINALES) */}
             <div>
               <h2 className="text-3xl font-bold text-slate-800 mb-8">
                 ¿Por qué elegir <span className="text-cadena-blue">Mudanzas Cadena</span>?
               </h2>
-              <ul className="space-y-6">
+              <ul className="space-y-4">
                 {[
-                  { icon: <Truck size={20}/>, title: "Infraestructura Propia", text: "Unidades con rampa hidráulica y GPS 24/7.", color: "bg-blue-100 text-blue-600" },
-                  { icon: <Package size={20}/>, title: "Maniobras Especiales", text: "Volado de muebles y maniobras especiales.", color: "bg-pink-100 text-pink-600" },
-                  { icon: <Users size={20}/>, title: "Personal de Confianza", text: "Personal capacitado y de confianza.", color: "bg-green-100 text-green-600" },
-                  { icon: <FileText size={20}/>, title: "Formalidad", text: "Facturación electrónica disponible.", color: "bg-purple-100 text-purple-600" },
-                  { icon: <MapPin size={20}/>, title: "Rutas Frecuentes", text: "Cobertura en rutas del Pacífico y Sureste (Mérida, Cancún).", color: "bg-yellow-100 text-yellow-600" }
+                  "Unidades con rampa hidráulica y GPS 24/7.",
+                  "Volado de muebles y maniobras especiales.",
+                  "Personal capacitado y de confianza.",
+                  "Facturación electrónica disponible.",
+                  "Cobertura en rutas del Pacífico y Sureste (Mérida, Cancún)."
                 ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-4">
-                    <div className={`p-2 rounded-xl ${item.color} shadow-sm mt-1`}>{item.icon}</div>
-                    <div>
-                       <h4 className="font-bold text-slate-800 text-sm">{item.title}</h4>
-                       <p className="text-slate-600 text-sm">{item.text}</p>
-                    </div>
+                  <li key={i} className="flex items-start gap-3">
+                    <CheckCircle2 className="text-cadena-pink flex-shrink-0 mt-1" size={20} />
+                    <span className="text-gray-700 font-medium">{item}</span>
                   </li>
                 ))}
               </ul>
               <div className="mt-8">
-                 <a href="/docs/Catálogo.pdf" target="_blank" className="text-cadena-blue font-bold text-sm hover:underline border border-cadena-blue px-6 py-2 rounded-full hover:bg-cadena-blue hover:text-white transition">
-                   Descargar Catálogo Completo (PDF)
-                 </a>
+                 <a 
+                  href="/docs/Catálogo de Servicios Mudanzas Cadena.pdf" 
+                  target="_blank"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-cadena-dark hover:bg-gray-800 transition"
+                >
+                  Descargar Catálogo Completo (PDF)
+                </a>
               </div>
             </div>
 
-            {/* DERECHA: MASCOTA Y CTA (Estilo Glass) */}
+            {/* DERECHA: MASCOTA Y CTA (AQUÍ SÍ CAMBIAMOS A DOBLE BOTÓN) */}
             <div className="bg-white/50 backdrop-blur-md rounded-3xl p-8 text-center border border-white/60 shadow-inner">
                <img src={mascota} alt="Mascota" className="w-28 h-28 object-contain mx-auto mb-6 drop-shadow-xl hover:scale-110 transition duration-300" />
                <h3 className="text-2xl font-bold text-slate-800 mb-2">¿Listo para mudarte?</h3>
                <p className="text-slate-600 mb-6 text-sm font-medium">
                  Déjanos los detalles pesados a nosotros. Cotiza tu servicio hoy mismo.
                </p>
-               <a href="https://wa.me/529994154957" className="block w-full py-4 bg-cadena-pink hover:bg-pink-600 text-white font-bold rounded-xl transition shadow-lg hover:shadow-pink-400/50">
-                 Pedir Cotización por WhatsApp
-               </a>
+               
+               <div className="flex flex-col gap-3">
+                 <a 
+                   href="https://wa.me/529994154957" 
+                   target="_blank"
+                   rel="noreferrer"
+                   className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition shadow-lg hover:shadow-green-400/50"
+                 >
+                   <MessageCircle size={20} />
+                   Pedir Cotización por WhatsApp
+                 </a>
+
+                 <Link 
+                   to="/cotizar" 
+                   className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-cadena-blue hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-lg hover:shadow-blue-400/50"
+                 >
+                   <FileText size={20} />
+                   Cotizar en Línea (Formulario)
+                 </Link>
+               </div>
             </div>
 
           </div>

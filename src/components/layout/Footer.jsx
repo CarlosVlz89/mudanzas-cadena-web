@@ -53,7 +53,7 @@ const Footer = () => {
               </li>
             </ul>
             <a 
-              href="/public/catalogo.pdf" 
+              href="./public/catalogo.pdf" 
               target="_blank"
               className="block w-full text-center border border-gray-600 text-gray-300 py-2 rounded hover:border-white hover:text-white transition text-sm"
             >
@@ -67,8 +67,6 @@ const Footer = () => {
         </div>
         <div className="flex justify-center gap-4 text-xs opacity-50 hover:opacity-100 transition-opacity">
           <Link to="/admin" className="hover:text-white">Acceso Administrativo</Link>
-          <span>|</span>
-          <Link to="/trabajadores" className="hover:text-white">Acceso Operadores</Link>
         </div>
       </div>
     </footer>
