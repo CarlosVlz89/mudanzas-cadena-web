@@ -38,9 +38,15 @@ const Dashboard = () => {
   const handleDelete = async (id) => { if (confirm("¿Eliminar registro?")) await deleteDoc(doc(db, "moves", id)); };
   
   const copyContractLink = (id) => { 
-    const url = `${window.location.origin}/#/contrato/${id}`;
+    // TRUCO: Usamos href y cortamos antes del # para obtener la ruta completa del repo
+    // Esto obtiene: "https://usuario.github.io/mudanzas-cadena/" completo
+    const baseUrl = window.location.href.split('#')[0];
+    
+    // Ahora sí armamos el link correcto
+    const url = `${baseUrl}#/contrato/${id}`;
+    
     navigator.clipboard.writeText(url); 
-    alert("Enlace del contrato copiado."); 
+    alert("Enlace del contrato copiado correctamente."); 
   };
 
   // --- FUNCIÓN: GENERAR ORDEN DE CARGA (PDF) ---
@@ -151,12 +157,20 @@ const Dashboard = () => {
         price: Number(editingMove.price),
         
         status: editingMove.status,
-        notes: editingMove.notes,
-        items: editingMove.items 
+        
+        // --- AQUÍ ESTÁ EL ARREGLO ---
+        // Si editingMove.notes es undefined, enviamos un string vacío
+        notes: editingMove.notes || '', 
+        
+        // También es buena práctica proteger el array de items
+        items: editingMove.items || []
       });
       setEditingMove(null);
       alert("Servicio actualizado correctamente.");
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+        console.error("Error al actualizar:", error); 
+        alert("Error al actualizar: " + error.message);
+    }
   };
 
   const handleCreateMove = async (e) => {
