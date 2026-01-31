@@ -49,34 +49,9 @@ const Dashboard = () => {
     alert("Enlace del contrato copiado correctamente."); 
   };
 
-  // --- FUNCIÓN: GENERAR ORDEN DE CARGA (PDF) ---
+  // --- FUNCIÓN: GENERAR ORDEN DE CARGA ---
   const handlePrintOrder = (move) => {
-    // Nota: Aquí podrías actualizar el HTML para usar move.financialItems si quieres que salgan los costos desglosados en la orden de carga también.
-    // Por ahora mantengo la lógica simple de inventario.
-    const printWindow = window.open('', '_blank');
-    const itemsList = move.items && move.items.length > 0 
-      ? move.items.map(item => `<tr><td style="padding:8px; border-bottom:1px solid #eee;">${item.quantity}</td><td style="padding:8px; border-bottom:1px solid #eee;">${item.name}</td></tr>`).join('')
-      : '<tr><td colspan="2" style="padding:10px; text-align:center; color:#999;">Sin inventario registrado</td></tr>';
-
-    const htmlContent = `
-      <html>
-        <head><title>Orden ${move.folio}</title></head>
-        <body style="font-family:Arial; padding:40px;">
-          <h1>Orden de Carga: ${move.folio}</h1>
-          <p><strong>Cliente:</strong> ${move.client}</p>
-          <p><strong>Origen:</strong> ${move.origin}</p>
-          <p><strong>Destino:</strong> ${move.destination}</p>
-          <h3>Inventario</h3>
-          <table style="width:100%; border-collapse:collapse;">
-            <thead><tr style="background:#eee;"><th style="text-align:left; padding:8px;">Cant</th><th style="text-align:left; padding:8px;">Artículo</th></tr></thead>
-            <tbody>${itemsList}</tbody>
-          </table>
-          <script>window.print();</script>
-        </body>
-      </html>
-    `;
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    navigate(`/orden-carga/${move.id}`);
   };
 
   // --- LÓGICA DE EDICIÓN ---

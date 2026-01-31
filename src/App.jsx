@@ -13,6 +13,7 @@ import Contract from './pages/website/Contract';
 import Login from './pages/app/Login';
 import Dashboard from './pages/app/Dashboard';
 import WorkOrder from './pages/app/WorkOrder';
+import PrintOrder from './pages/app/PrintOrder';
 
 // COMPONENTES UI
 import FloatingMascot from './components/ui/FloatingMascot';
@@ -53,6 +54,7 @@ function App() {
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/contrato/:id" element={<Contract />} />
         <Route path="/trabajadores" element={<WorkOrder />} />
+        <Route path="/orden-carga/:id" element={<PrintOrder />} />
       </Routes>
     </>
   );
