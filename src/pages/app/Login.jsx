@@ -1,104 +1,95 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // <--- IMPORTANTE: Importar Link
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../config/firebase'; // Importamos nuestra config
-import { Lock, Truck, AlertCircle } from 'lucide-react';
+import { auth } from '../../config/firebase';
+import { Lock, Mail, ArrowLeft, AlertCircle } from 'lucide-react';
+import mascota from '../../assets/images/mascota.png'; 
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-
     try {
-      // INTENTO DE LOGIN CON FIREBASE
       await signInWithEmailAndPassword(auth, email, password);
-      // Si funciona, redirigir al Dashboard
-      navigate('/admin/dashboard');
+      navigate('/dashboard');
     } catch (err) {
-      console.error(err);
-      setError('Credenciales incorrectas. Verifica tu correo y contraseña.');
-    } finally {
-      setLoading(false);
+      setError('Credenciales incorrectas. Intenta de nuevo.');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+      
+      {/* Fondos decorativos */}
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-cadena-blue/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-cadena-pink/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white relative z-10">
         
-        {/* Cabecera Azul */}
-        <div className="bg-cadena-dark p-8 text-center">
-          <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-            <Truck className="text-white" size={32} />
+        {/* ENCABEZADO CON MASCOTA */}
+        <div className="text-center mb-8">
+          <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-lg overflow-hidden">
+             <img src={mascota} alt="Admin" className="w-full h-full object-cover object-top pt-2 scale-110" />
           </div>
-          <h2 className="text-2xl font-bold text-white">Acceso Administrativo</h2>
-          <p className="text-gray-400 text-sm mt-2">Sistema Integral SwiftMove</p>
+          <h2 className="text-2xl font-black text-slate-800">Acceso Administrativo</h2>
+          <p className="text-slate-500 text-sm">Ingresa tus credenciales para gestionar.</p>
         </div>
 
-        {/* Formulario */}
-        <div className="p-8">
-          <form onSubmit={handleLogin} className="space-y-6">
-            
-            {/* Mensaje de Error */}
-            {error && (
-              <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2">
-                <AlertCircle size={16} />
-                {error}
-              </div>
-            )}
+        {error && (
+          <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm font-bold flex items-center gap-2 mb-6 border border-red-100">
+            <AlertCircle size={18} /> {error}
+          </div>
+        )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Correo Corporativo</label>
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">Correo Electrónico</label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-3.5 text-cadena-blue" size={20} />
               <input 
                 type="email" 
+                className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-cadena-blue focus:bg-white outline-none transition font-medium text-slate-700"
+                placeholder="admin@mudanzascadena.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cadena-blue focus:border-cadena-blue outline-none transition"
-                placeholder="admin@empresa.com"
                 required
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
-              <div className="relative">
-                <input 
-                  type="password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-cadena-blue focus:border-cadena-blue outline-none transition"
-                  placeholder="••••••••"
-                  required
-                />
-                <Lock className="absolute right-3 top-3.5 text-gray-400" size={20} />
-              </div>
-            </div>
-
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full bg-cadena-blue hover:bg-ocean-dark text-white font-bold py-3 rounded-lg transition shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center"
-            >
-              {loading ? (
-                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-              ) : (
-                'Iniciar Sesión'
-              )}
-            </button>
-          </form>
-          
-          <div className="mt-6 text-center">
-            <a href="/" className="text-sm text-gray-400 hover:text-cadena-blue transition">
-              ← Volver al sitio web
-            </a>
           </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-1 ml-1">Contraseña</label>
+            <div className="relative">
+              <Lock className="absolute left-4 top-3.5 text-cadena-pink" size={20} />
+              <input 
+                type="password" 
+                className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-cadena-pink focus:bg-white outline-none transition font-medium text-slate-700"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <button type="submit" className="w-full bg-cadena-dark text-white py-4 rounded-xl font-bold shadow-lg hover:bg-black transition transform active:scale-95">
+            Entrar al Sistema
+          </button>
+        </form>
+
+        {/* --- AQUÍ ESTÁ EL ARREGLO DEL BOTÓN --- */}
+        {/* Usamos <Link to="/"> en vez de <a href="/"> */}
+        <div className="mt-8 text-center">
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-cadena-blue font-bold text-sm transition"
+          >
+            <ArrowLeft size={16} /> Volver al sitio web
+          </Link>
         </div>
 
       </div>
