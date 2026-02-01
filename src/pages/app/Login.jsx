@@ -53,7 +53,7 @@ const Login = () => {
               <input 
                 type="email" 
                 className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-cadena-blue focus:bg-white outline-none transition font-medium text-slate-700"
-                placeholder="admin@mudanzascadena.com"
+                placeholder="e-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
