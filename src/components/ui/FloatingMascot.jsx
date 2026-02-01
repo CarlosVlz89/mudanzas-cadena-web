@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // <--- 1. IMPORTANTE
+import { Link } from 'react-router-dom'; 
 import mascota from '../../assets/images/mascota.png'; 
 
 const FloatingMascot = () => {
   const [isVisible, setIsVisible] = useState(false);
 
-  // Efecto para que aparezca suavemente después de 1 segundo
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 1000);
     return () => clearTimeout(timer);
@@ -13,7 +12,7 @@ const FloatingMascot = () => {
 
   return (
     <Link
-      to="/cotizar" // <--- 2. AHORA LLEVA AL FORMULARIO
+      to="/cotizar"
       className={`fixed bottom-6 right-6 z-[60] flex flex-col items-end cursor-pointer group transition-transform duration-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}
     >
       
@@ -27,7 +26,12 @@ const FloatingMascot = () => {
       </div>
 
       {/* 2. LA MASCOTA */}
-      <div className="relative w-20 h-20 sm:w-24 sm:h-24">
+      {/* CAMBIO AQUÍ: 
+          - w-20 h-20: Celular (mantiene tamaño decente)
+          - md:w-32 md:h-32: Computadora (Crece bastante para destacar) 
+      */}
+      <div className="relative w-20 h-20 md:w-32 md:h-32 transition-all duration-300">
+        
         {/* Efecto de 'Aura' */}
         <div className="absolute inset-0 bg-cadena-blue/30 blur-2xl rounded-full scale-0 group-hover:scale-100 transition-transform duration-300"></div>
         

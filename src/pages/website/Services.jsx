@@ -74,7 +74,7 @@ const Services = () => {
               </p>
               
               <ul className="space-y-4 mb-8">
-                <li className="flex items-center gap-3 text-slate-700 font-medium"><Clock size={20} className="text-gray-400"/> Entrega de 5 a 12 días hábiles.</li>
+                <li className="flex items-center gap-3 text-slate-700 font-medium"><Clock size={20} className="text-gray-400"/> Entrega de 5 a 15 días hábiles.</li>
                 <li className="flex items-center gap-3 text-slate-700 font-medium"><CheckCircle2 size={20} className="text-pink-400"/> Precio mucho más accesible.</li>
                 <li className="flex items-center gap-3 text-slate-700 font-medium"><CheckCircle2 size={20} className="text-pink-400"/> Ideal para cargas medianas.</li>
               </ul>
@@ -170,7 +170,6 @@ const Services = () => {
                 ))}
               </ul>
               <div className="mt-8">
-                 {/* ENLACE CORREGIDO: Usamos import.meta.env.BASE_URL */}
                  <a 
                   href={`${import.meta.env.BASE_URL}catalogo.pdf`} 
                   target="_blank"
@@ -183,9 +182,22 @@ const Services = () => {
               </div>
             </div>
 
-            {/* DERECHA: MASCOTA Y CTA */}
+            {/* DERECHA: MASCOTA TIPO PERFIL Y CTA */}
             <div className="bg-white/50 backdrop-blur-md rounded-3xl p-8 text-center border border-white/60 shadow-inner">
-               <img src={mascota} alt="Mascota" className="w-28 h-28 object-contain mx-auto mb-6 drop-shadow-xl hover:scale-110 transition duration-300" />
+               
+               {/* AQUÍ ESTÁ LA MAGIA DE LA FOTO DE PERFIL:
+                 1. div contenedor: crea el círculo (rounded-full) y corta lo que sobre (overflow-hidden).
+                 2. border-4 border-white: le da el marco blanco típico de foto de perfil.
+                 3. img: tiene 'scale-125' para hacer zoom y 'object-top' para enfocar la cara/cuerpo superior.
+               */}
+               <div className="w-32 h-32 md:w-56 md:h-56 mx-auto mb-6 rounded-full overflow-hidden border-4 border-white shadow-2xl relative bg-blue-50 group cursor-pointer">
+                 <img 
+                   src={mascota} 
+                   alt="Mascota" 
+                   className="w-full h-full object-cover object-top scale-125 group-hover:scale-100 transition-transform duration-500" 
+                 />
+               </div>
+
                <h3 className="text-2xl font-bold text-slate-800 mb-2">¿Listo para mudarte?</h3>
                <p className="text-slate-600 mb-6 text-sm font-medium">
                  Déjanos los detalles pesados a nosotros. Cotiza tu servicio hoy mismo.
