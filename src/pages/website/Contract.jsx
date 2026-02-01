@@ -6,6 +6,8 @@ import {
   PenTool, Printer, CheckCircle, UploadCloud, ShieldCheck, 
   Clock, FileText, Home, ArrowRight, MapPin 
 } from 'lucide-react';
+// 1. IMPORTAMOS EL LOGO (Asegúrate de que la ruta sea correcta)
+import logo from '../../assets/images/logo.png';
 
 // Estilos para salto de página al imprimir
 const pageBreakClass = "print:break-after-page print:min-h-screen print:flex print:flex-col print:justify-between relative bg-white shadow-lg p-12 mb-10 mx-auto max-w-[21.5cm] min-h-[27.9cm] text-gray-800 print:shadow-none print:m-0 print:w-full";
@@ -135,14 +137,13 @@ const Contract = () => {
     else currentScreen = 'contract';
   }
 
-  // --- FOOTER DE FIRMA (CORREGIDO PARA CENTRAR) ---
+  // --- FOOTER DE FIRMA ---
   const SignatureFooter = () => (
     <div className="mt-auto pt-8 border-t border-gray-300 flex justify-between items-end text-xs">
        <div>
           <p className="font-bold">MUDANZAS CADENA</p>
           <p>Folio: {move.folio}</p>
        </div>
-       {/* Bloque de firma Corregido */}
        <div className="flex flex-col items-center w-40"> 
           {move.signature ? (
             <img src={move.signature} className="h-12 object-contain -mb-2" alt="Firma" /> 
@@ -192,15 +193,27 @@ const Contract = () => {
           
           {/* --- PÁGINA 1: PORTADA Y DATOS --- */}
           <div className={pageBreakClass}>
-            <div className="text-center border-b-4 border-cadena-pink pb-4 mb-8">
-              <h1 className="text-4xl font-black italic tracking-tighter"><span className="text-black">M</span>UDANZAS <span className="text-cadena-pink">CADENA</span></h1>
-              <p className="text-sm tracking-widest text-gray-500">LOGÍSTICA Y TRANSPORTE</p>
+            
+            {/* 2. ENCABEZADO MEJORADO: LOGO IZQUIERDA - FOLIO DERECHA */}
+            <div className="flex justify-between items-end border-b-4 border-cadena-pink pb-4 mb-8">
+              
+              {/* Lado Izquierdo: Logo */}
+              <div className="flex flex-col items-start">
+                <img src={logo} alt="Mudanzas Cadena" className="h-24 object-contain object-left -ml-3" />
+                <p className="text-xs tracking-[0.2em] text-gray-400 font-bold uppercase mt-1 ml-1">Logística y Transporte</p>
+              </div>
+
+              {/* Lado Derecho: Folio y Fecha */}
+              <div className="text-right">
+                <p className="font-black text-gray-700 text-lg">CONTRATO DE SERVICIO</p>
+                <p className="text-sm text-gray-500">FOLIO: <span className="text-red-600 font-black text-xl">{move.folio}</span></p>
+                <p className="text-xs font-bold uppercase text-cadena-blue mt-1">
+                  {new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+
             </div>
-            <div className="text-right mb-8">
-              <p className="font-bold text-gray-600">CONTRATO DE SERVICIO</p>
-              <p className="text-sm">FOLIO: <span className="text-red-500 font-bold">{move.folio}</span></p>
-              <p className="text-sm uppercase">{new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            </div>
+
             <div className="space-y-6 text-sm uppercase">
                <div className="border p-4 rounded bg-gray-50">
                   <p><strong>CLIENTE:</strong> {move.client}</p>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Truck, Home, Image, Phone, MapPin, Package } from 'lucide-react';
+import { Menu, X, Home, Image, Phone, MapPin, Package, Truck } from 'lucide-react'; // Deje Truck por si lo usas en el menú móvil
+import logo from '../../assets/images/logo.png'; 
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,30 +33,28 @@ const Navbar = () => {
   };
 
   const navLinkClass = "bg-transparent border-none cursor-pointer text-gray-600 hover:text-cadena-pink font-bold text-xs lg:text-sm uppercase tracking-wide transition whitespace-nowrap";
-  
-  // --- ESTILO CORREGIDO: "HIELO" (Light Glass) ---
-  // bg-white/40: Fondo blanco semitransparente (ADIOS AL NEGRO)
-  // text-slate-700: Texto oscuro para contraste
-  // border-white/50: Borde sutil blanco
   const mobileLinkClass = "flex flex-col items-center justify-center gap-1 w-full py-4 text-lg font-bold text-slate-700 bg-white/40 backdrop-blur-md hover:bg-white/80 hover:text-cadena-pink hover:scale-[1.02] rounded-2xl transition-all duration-300 border border-white/50 shadow-sm";
 
   return (
     <>
       {/* BARRA DE NAVEGACIÓN (Desktop) */}
-      <nav className="bg-white/80 backdrop-blur-lg border-b border-white/40 shadow-sm fixed w-full z-50 top-0 left-0 h-20 transition-all duration-300">
+      <nav className="bg-white/90 backdrop-blur-lg border-b border-white/40 shadow-sm fixed w-full z-50 top-0 left-0 h-20 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex justify-between items-center h-full gap-2">
             
-            {/* LOGO */}
+            {/* --- LOGO DE MUDANZAS CADENA --- */}
             <button 
               onClick={() => handleNavigation('inicio')} 
               className="flex items-center gap-2 cursor-pointer bg-transparent border-none outline-none group shrink-0 mr-auto"
             >
-              <Truck className="text-cadena-pink w-6 h-6 md:w-8 md:h-8 transform group-hover:-translate-x-1 transition-transform duration-300" />
-              <span className="font-black text-lg md:text-xl lg:text-2xl tracking-tighter flex items-center gap-1">
-                <span className="text-gray-900">MUDANZAS</span>
-                <span className="text-cadena-pink">CADENA</span>
-              </span>
+              {/* Aquí mostramos la imagen. 
+                  'h-10 md:h-14' controla la altura para que no se vea ni muy chico ni muy grande. 
+                  'w-auto' mantiene la proporción. */}
+              <img 
+                src={logo} 
+                alt="Mudanzas Cadena Logo" 
+                className="h-14 md:h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-105 mt-6" 
+              />
             </button>
 
             {/* MENÚ DE ESCRITORIO */}
@@ -86,19 +85,17 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* --- MENÚ MÓVIL (FONDO CRISTAL + BOTONES CLAROS) --- */}
-      {/* Fondo general semitransparente para ver la página detrás borrosa */}
-      <div className={`md:hidden fixed inset-0 z-[60] bg-white/85 backdrop-blur-xl flex flex-col transition-transform duration-500 ease-in-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* --- MENÚ MÓVIL --- */}
+      <div className={`md:hidden fixed inset-0 z-[60] bg-white/95 backdrop-blur-xl flex flex-col transition-transform duration-500 ease-in-out ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         
-        {/* Cabecera */}
-        <div className="flex justify-between items-center p-6 border-b border-white/30">
-           <span className="font-black text-xl text-slate-700 flex items-center gap-2">
-              <Truck className="text-cadena-pink" size={24}/> 
-              <span className="tracking-widest">MENÚ</span>
-           </span>
+        {/* Cabecera Móvil */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-100">
+           {/* También puse el logo aquí en pequeño para mantener la identidad */}
+           <img src={logo} alt="Mudanzas Cadena" className="h-12 w-auto object-contain" />
+           
            <button 
              onClick={() => setIsMenuOpen(false)} 
-             className="p-2 bg-white/60 rounded-full text-slate-500 hover:bg-red-50 hover:text-red-500 transition shadow-sm border border-white/40"
+             className="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-red-50 hover:text-red-500 transition shadow-sm"
            >
              <X size={28} />
            </button>
@@ -107,7 +104,6 @@ const Navbar = () => {
         {/* Contenido Centrado */}
         <div className="flex-1 flex flex-col items-center justify-start pt-6 px-6 overflow-y-auto space-y-3">
             
-            {/* COTIZAR DESTACADO */}
             <Link 
               to="/cotizar" 
               onClick={() => setIsMenuOpen(false)} 
@@ -117,7 +113,6 @@ const Navbar = () => {
               COTIZAR AHORA
             </Link>
 
-            {/* BOTONES NAVEGACIÓN (AHORA CLAROS) */}
             <button onClick={() => handleNavigation('inicio')} className={mobileLinkClass}>
               <Home size={24} className="opacity-60 mb-1"/> Inicio
             </button>
@@ -140,11 +135,10 @@ const Navbar = () => {
 
         </div>
         
-        {/* Decoración inferior */}
         <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
       </div>
     </>
   );
 };
 
-export default Navbar; 
+export default Navbar;

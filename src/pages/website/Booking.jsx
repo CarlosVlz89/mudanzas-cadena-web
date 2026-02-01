@@ -1,5 +1,5 @@
 import { useState } from 'react'; 
-import { collection, addDoc } from 'firebase/firestore'; 
+import { collection, addDoc, runTransaction, doc } from 'firebase/firestore'; 
 import { db } from '../../config/firebase'; 
 import { 
   Truck, CheckCircle, Plus, Minus, Sofa, Tv, Box, Bed, 
@@ -7,7 +7,7 @@ import {
   Frame, Music2, Table2, Monitor, Container, Archive 
 } from 'lucide-react'; 
 
-// --- INVENTARIO COMPLETO (Motos, Autos, Pianos, etc.) ---
+// --- INVENTARIO COMPLETO ---
 const FURNITURE_ITEMS = [ 
   // Básicos
   { id: 'caja_ch', label: 'Caja Chica', icon: <Box size={20} /> }, 
@@ -66,17 +66,35 @@ const Booking = () => {
           return { name: item.label, quantity: qty }; 
         }); 
 
-      const folio = 'MUD-' + Math.floor(1000 + Math.random() * 9000); 
-      await addDoc(collection(db, "moves"), { 
-        ...form, 
-        items: selectedItems, 
-        folio: folio, 
-        status: 'Pendiente', 
-        porcentaje: 0, 
-        price: 0, 
-        createdAt: new Date() 
-      }); 
-      setSuccessId(folio); 
+      let generatedFolio = '';
+
+      // Usamos la transacción para el folio secuencial (que ya habíamos configurado)
+      await runTransaction(db, async (transaction) => {
+        const counterRef = doc(db, "counters", "moves_counter");
+        const counterSnap = await transaction.get(counterRef);
+
+        let newCount = 1;
+        if (counterSnap.exists()) {
+          newCount = counterSnap.data().current + 1;
+        }
+
+        generatedFolio = `MUD-${String(newCount).padStart(4, '0')}`;
+        const newMoveRef = doc(collection(db, "moves"));
+
+        transaction.set(newMoveRef, { 
+          ...form, 
+          items: selectedItems, 
+          folio: generatedFolio, 
+          status: 'Pendiente', 
+          porcentaje: 0, 
+          price: 0, 
+          createdAt: new Date() 
+        });
+
+        transaction.set(counterRef, { current: newCount });
+      });
+
+      setSuccessId(generatedFolio); 
     } catch (error) { 
       console.error(error); 
       alert("Error al enviar. Intenta de nuevo."); 
@@ -130,7 +148,6 @@ const Booking = () => {
                 <Truck size={32} /> 
               </div> 
             </div> 
-            {/* Barra de progreso visual */} 
             <div className="absolute bottom-0 left-0 h-1 bg-cadena-pink transition-all duration-500" style={{ width: `${(step/2)*100}%` }}></div> 
           </div> 
 
@@ -169,6 +186,7 @@ const Booking = () => {
             {step === 2 && (
               <div className="space-y-8 animate-fade-in">
                 
+                {/* --- AQUI ESTA LA SECCIÓN DE RUTA QUE TE GUSTA --- */}
                 <div className="bg-blue-50/50 p-4 sm:p-6 rounded-3xl border border-blue-100">
                   <div className="flex items-center gap-2 mb-4">
                      <div className="w-1.5 h-6 bg-cadena-blue rounded-full"></div>
@@ -207,14 +225,13 @@ const Booking = () => {
                   </p>
                 </div> 
 
-                {/* Selector de Muebles */} 
+                {/* --- SECCIÓN DE INVENTARIO CON BOTONES COMPACTOS --- */} 
                 <div> 
                   <div className="flex items-center gap-3 mb-6"> 
                     <div className="w-1.5 h-6 bg-cadena-blue rounded-full"></div> 
                     <h3 className="font-black text-gray-800 uppercase tracking-wider text-sm">Lista de Inventario</h3> 
                   </div> 
                   
-                  {/* Grid: Ajustado para que no se pegue */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"> 
                     {FURNITURE_ITEMS.map((item) => ( 
                       <div key={item.id} className={`p-3 rounded-[2rem] border-2 flex flex-col items-center justify-between transition-all duration-300 ${itemsCount[item.id] > 0 ? 'border-cadena-blue bg-white shadow-lg shadow-blue-100 scale-105' : 'border-white bg-white/30 opacity-70'}`}> 
@@ -227,17 +244,16 @@ const Booking = () => {
                             {item.label}
                         </span> 
                         
-                        {/* CONTENEDOR COMPACTO PARA MÓVIL */}
-                        {/* Ajuste: px-2 py-1.5 (más chico en móvil) sm:px-3 sm:py-2 (normal en PC) */}
-                        <div className="flex items-center justify-between w-full bg-slate-100 rounded-2xl px-2 py-1.5 sm:px-3 sm:py-2"> 
+                        {/* BOTONES COMPACTOS (px-2 py-1) */}
+                        <div className="flex items-center justify-between w-full bg-slate-100 rounded-2xl px-2 py-1 sm:px-3 sm:py-2"> 
                           <button type="button" onClick={() => updateCount(item.id, -1)} className="text-gray-400 hover:text-red-500 transition p-1">
-                              <Minus size={14} strokeWidth={3} />
+                              <Minus size={12} strokeWidth={3} />
                           </button> 
                           <span className="font-black w-4 text-center text-xs text-cadena-dark">
                               {itemsCount[item.id] || 0}
                           </span> 
                           <button type="button" onClick={() => updateCount(item.id, 1)} className="text-cadena-blue hover:text-blue-700 transition p-1">
-                              <Plus size={14} strokeWidth={3} />
+                              <Plus size={12} strokeWidth={3} />
                           </button> 
                         </div> 
                       </div> 
