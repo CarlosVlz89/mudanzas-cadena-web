@@ -105,7 +105,7 @@ const Services = () => {
               
               <div className="mt-8">
                  <a 
-                  href="/docs/Catálogo de Servicios Mudanzas Cadena.pdf" 
+                  href="./public/catalogo.pdf" 
                   target="_blank"
                   className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-cadena-dark hover:bg-gray-800 transition"
                 >

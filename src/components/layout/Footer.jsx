@@ -52,9 +52,12 @@ const Footer = () => {
                 <span className="text-white font-medium">8:00 hrs - 22:00 hrs</span>
               </li>
             </ul>
+            {/* ENLACE CORREGIDO AQUÍ TAMBIÉN */}
             <a 
-              href="./public/catalogo.pdf" 
+              href={`${import.meta.env.BASE_URL}catalogo.pdf`} 
               target="_blank"
+              rel="noopener noreferrer"
+              download
               className="block w-full text-center border border-gray-600 text-gray-300 py-2 rounded hover:border-white hover:text-white transition text-sm"
             >
               Descargar Catálogo PDF

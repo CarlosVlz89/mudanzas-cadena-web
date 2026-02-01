@@ -6,7 +6,7 @@ const Services = () => {
   return (
     <div className="py-12 bg-slate-50"> 
       
-      {/* 1. ENCABEZADO (TUS TEXTOS ORIGINALES) */}
+      {/* 1. ENCABEZADO */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">
         <span className="bg-white/50 px-4 py-1 rounded-full text-cadena-pink font-bold tracking-widest uppercase text-xs border border-white/40 shadow-sm">
           Tipos de Servicio
@@ -19,7 +19,7 @@ const Services = () => {
         </p>
       </div>
 
-      {/* 2. LOS PROTAGONISTAS (TUS TEXTOS ORIGINALES) */}
+      {/* 2. LOS PROTAGONISTAS */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           
@@ -84,14 +84,14 @@ const Services = () => {
         </div>
       </div>
 
-      {/* 3. SOLUCIONES ESPECIALIZADAS (NUEVO DISEÑO LLAMATIVO - MISMOS TEXTOS) */}
+      {/* 3. SOLUCIONES ESPECIALIZADAS */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
         <div className="text-center mb-12">
           <h3 className="text-3xl font-extrabold text-slate-800">Soluciones Especializadas</h3>
           <p className="text-slate-500 mt-2">Todo lo que necesitas para completar tu traslado.</p>
         </div>
         
-        {/* TARJETAS PREMIUM (Blanco Sólido + Sombra de Color) */}
+        {/* TARJETAS PREMIUM */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { 
@@ -128,7 +128,6 @@ const Services = () => {
             }
           ].map((item, i) => (
             <div key={i} className="group bg-white rounded-3xl p-6 border border-slate-100 hover:border-transparent hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 relative overflow-hidden">
-              {/* Efecto de fondo degradado al pasar el mouse */}
               <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br ${item.bg} to-transparent pointer-events-none`}></div>
               
               <div className="relative z-10 text-center">
@@ -143,16 +142,15 @@ const Services = () => {
         </div>
       </div>
 
-      {/* 4. SECCIÓN FINAL (TUS TEXTOS ORIGINALES + DOBLE BOTÓN) */}
+      {/* 4. SECCIÓN FINAL */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-[3rem] p-8 md:p-12 shadow-2xl relative overflow-hidden">
           
-          {/* Brillo decorativo */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-100/40 to-pink-100/40 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
           <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             
-            {/* IZQUIERDA: BENEFICIOS (TEXTOS ORIGINALES) */}
+            {/* IZQUIERDA: BENEFICIOS */}
             <div>
               <h2 className="text-3xl font-bold text-slate-800 mb-8">
                 ¿Por qué elegir <span className="text-cadena-blue">Mudanzas Cadena</span>?
@@ -172,9 +170,12 @@ const Services = () => {
                 ))}
               </ul>
               <div className="mt-8">
+                 {/* ENLACE CORREGIDO: Usamos import.meta.env.BASE_URL */}
                  <a 
-                  href="/docs/Catálogo de Servicios Mudanzas Cadena.pdf" 
+                  href={`${import.meta.env.BASE_URL}catalogo.pdf`} 
                   target="_blank"
+                  rel="noopener noreferrer"
+                  download
                   className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-cadena-dark hover:bg-gray-800 transition"
                 >
                   Descargar Catálogo Completo (PDF)
@@ -182,7 +183,7 @@ const Services = () => {
               </div>
             </div>
 
-            {/* DERECHA: MASCOTA Y CTA (AQUÍ SÍ CAMBIAMOS A DOBLE BOTÓN) */}
+            {/* DERECHA: MASCOTA Y CTA */}
             <div className="bg-white/50 backdrop-blur-md rounded-3xl p-8 text-center border border-white/60 shadow-inner">
                <img src={mascota} alt="Mascota" className="w-28 h-28 object-contain mx-auto mb-6 drop-shadow-xl hover:scale-110 transition duration-300" />
                <h3 className="text-2xl font-bold text-slate-800 mb-2">¿Listo para mudarte?</h3>
