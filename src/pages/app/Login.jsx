@@ -15,7 +15,7 @@ const Login = () => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate('/dashboard');
+      navigate('/admin/dashboard');
     } catch (err) {
       setError('Credenciales incorrectas. Intenta de nuevo.');
     }
