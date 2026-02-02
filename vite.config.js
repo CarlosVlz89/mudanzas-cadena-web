@@ -7,6 +7,16 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      
+      // --- AGREGA ESTO PARA QUE SE ACTUALICE SÍ O SÍ ---
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'], // Qué archivos guardar
+        cleanupOutdatedCaches: true, // Borra versiones viejas de inmediato
+        clientsClaim: true,          // Toma el control de la página abierta
+        skipWaiting: true            // No espera a que cierres la app
+      },
+      // --------------------------------------------------
+
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'Mudanzas Cadena',
@@ -16,7 +26,7 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '.',
+        start_url: '.', // Asegúrate que esto sea '.' o la ruta base correcta
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -38,5 +48,5 @@ export default defineConfig({
       }
     })
   ],
-  base: "/mudanzas-cadena-web/", // <--- RECUERDA: Esto debe coincidir con tu repo de GitHub
+  base: "/mudanzas-cadena-web/", 
 })
