@@ -238,27 +238,37 @@ const Contract = () => {
             <SignatureFooter />
           </div>
 
-          {/* --- PÁGINA 2: INVENTARIO --- */}
+          {/* --- PÁGINA 2: INVENTARIO (MODIFICADO A 3 COLUMNAS) --- */}
           <div className={pageBreakClass}>
-            <h2 className="text-2xl font-bold text-center mb-6 border-b pb-2">INVENTARIO DECLARADO</h2>
+            <h2 className="text-2xl font-bold text-center mb-2">INVENTARIO DECLARADO</h2>
+            <p className="text-center text-xs text-gray-400 mb-6 uppercase tracking-widest border-b pb-4">
+              Revisado y Autorizado por el Cliente
+            </p>
+            
             <div className="flex-1">
-               <table className="w-full text-sm border-collapse">
-                  <thead>
-                     <tr className="bg-gray-100 border-b-2 border-gray-300">
-                        <th className="text-left p-2">CANT.</th>
-                        <th className="text-left p-2">DESCRIPCIÓN</th>
-                     </tr>
-                  </thead>
-                  <tbody>
-                     {move.items && move.items.length > 0 ? move.items.map((item, i) => (
-                        <tr key={i} className="border-b border-gray-200">
-                           <td className="p-2 font-bold w-16">{item.quantity}</td>
-                           <td className="p-2">{item.name}</td>
-                        </tr>
-                     )) : <tr><td colSpan="2" className="p-4 text-center text-gray-400 italic">Sin inventario desglosado.</td></tr>}
-                  </tbody>
-               </table>
+               {move.items && move.items.length > 0 ? (
+                 /* AQUI ESTA EL TRUCO: 'columns-3' crea 3 columnas automáticas */
+                 <div className="columns-2 md:columns-3 gap-8">
+                    {move.items.map((item, i) => (
+                       <div key={i} className="break-inside-avoid mb-2 border-b border-gray-100 pb-1 flex items-center gap-3 text-sm">
+                          {/* Cantidad en un cuadrito gris para resaltar */}
+                          <span className="font-bold bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs min-w-[2rem] text-center">
+                            {item.quantity}
+                          </span>
+                          {/* Nombre del mueble */}
+                          <span className="leading-tight">{item.name}</span>
+                       </div>
+                    ))}
+                 </div>
+               ) : (
+                 <div className="p-12 text-center border-2 border-dashed border-gray-200 rounded-xl">
+                    <p className="text-gray-400 italic">Sin inventario desglosado en sistema.</p>
+                 </div>
+               )}
             </div>
+            
+            {/* Espacio extra por si la lista es corta, empuja el footer abajo */}
+            <div className="mt-auto"></div>
             <SignatureFooter />
           </div>
 
