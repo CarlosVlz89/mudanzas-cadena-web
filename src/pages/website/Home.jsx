@@ -1,16 +1,29 @@
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Clock, Heart, MessageCircle, FileText, MapPin } from 'lucide-react';
+import { Shield, Clock, Heart, MessageCircle, FileText, MapPin } from 'lucide-react';
 import heroVideo from '../../assets/videos/hero-truck.mp4';
-// 1. IMPORTAMOS UNA IMAGEN DE RESPALDO (Usa la misma de servicios o tu favorita)
 import posterImage from '../../assets/images/truck-side.jpg'; 
 import Services from './Services';
 import Gallery from '../../components/website/Gallery'; 
 
 const Home = () => {
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    // Intentamos forzar la reproducción apenas cargue el componente
+    if (videoRef.current) {
+      videoRef.current.play().catch(error => {
+        console.log("El navegador bloqueó el autoplay (normal en móviles/ahorro de batería):", error);
+        // Si entra aquí, isVideoPlaying se queda en false, así que se verá la imagen.
+      });
+    }
+  }, []);
+
   return (
     <div className="flex flex-col w-full bg-slate-50 relative overflow-hidden pt-20">
       
-      {/* Manchas de fondo (Liquid) */}
+      {/* Manchas de fondo */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cadena-pink/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none z-0"></div>
       <div className="absolute top-[800px] left-0 w-[600px] h-[600px] bg-cadena-blue/20 rounded-full blur-3xl -translate-x-1/2 pointer-events-none z-0"></div>
       <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-blue-200/30 rounded-full blur-3xl translate-y-1/4 pointer-events-none z-0"></div>
@@ -18,29 +31,38 @@ const Home = () => {
       <div className="relative z-10">
 
         {/* HERO */}
-        <div id="inicio" className="relative h-[600px] flex items-center scroll-mt-24 overflow-hidden">
+        <div id="inicio" className="relative h-[600px] flex items-center scroll-mt-24 overflow-hidden bg-gray-900">
   
-          {/* --- CORRECCIÓN SAFARI --- */}
+          {/* A. IMAGEN DE FONDO (SIEMPRE VISIBLE DETRÁS) */}
+          <img 
+            src={posterImage} 
+            alt="Fondo Mudanzas Cadena" 
+            className="absolute inset-0 w-full h-full object-cover z-0 opacity-80" 
+          />
+
+          {/* B. VIDEO (SÓLO SE MUESTRA SI REALMENTE ESTÁ CORRIENDO) */}
           <video
+            ref={videoRef}
             autoPlay
             loop
             muted
             playsInline
-            webkit-playsinline="true" /* Truco para iOS viejos */
-            poster={posterImage}      /* Imagen si el video falla o está en ahorro de batería */
-            className="absolute inset-0 z-0 w-full h-full object-cover"
+            // CAMBIO CLAVE: Usamos 'onPlay' en lugar de 'onCanPlayThrough'
+            // Esto asegura que solo se muestre cuando los cuadros ya se están moviendo
+            onPlay={() => setIsVideoPlaying(true)}
+            className={`absolute inset-0 z-10 w-full h-full object-cover transition-opacity duration-700 ${
+              isVideoPlaying ? 'opacity-100' : 'opacity-0'
+            }`} 
           >
             <source src={heroVideo} type="video/mp4" />
-            {/* Si el navegador es muy viejo, mostramos la imagen también */}
-            <img src={posterImage} alt="Mudanzas Cadena" className="absolute inset-0 w-full h-full object-cover" />
           </video>
 
-          {/* Overlay oscuro */}
-          <div className="absolute inset-0 bg-black/50 z-1"></div>
+          {/* C. OVERLAY OSCURO */}
+          <div className="absolute inset-0 bg-black/60 z-20"></div>
 
           {/* Contenido Hero */}
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left">
-            <span className="inline-block py-1 px-3 rounded-full bg-cadena-pink/90 backdrop-blur-sm text-white text-sm font-bold mb-4 tracking-wider border border-white/20 shadow-lg">
+          <div className="relative z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left">
+            <span className="inline-block py-1 px-3 rounded-full bg-cadena-pink/90 backdrop-blur-sm text-white text-sm font-bold mb-4 tracking-wider border border-white/20 shadow-lg animate-fade-in">
               MUDANZAS Y FLETES NACIONALES
             </span>
             <h1 className="text-4xl sm:text-6xl font-extrabold text-white leading-tight mb-6 drop-shadow-lg">

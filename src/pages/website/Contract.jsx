@@ -4,9 +4,9 @@ import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { 
   PenTool, Printer, CheckCircle, UploadCloud, ShieldCheck, 
-  Clock, FileText, Home, ArrowRight, MapPin 
+  Clock, FileText, Home, ArrowRight, MapPin, X, Trash2, Image as ImageIcon
 } from 'lucide-react';
-// 1. IMPORTAMOS EL LOGO (Asegúrate de que la ruta sea correcta)
+// 1. IMPORTAMOS EL LOGO
 import logo from '../../assets/images/logo.png';
 
 // Estilos para salto de página al imprimir
@@ -21,6 +21,10 @@ const Contract = () => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
 
+  // --- NUEVOS ESTADOS PARA LA VISTA PREVIA ---
+  const [tempFile, setTempFile] = useState(null);       // El archivo real
+  const [tempPreview, setTempPreview] = useState(null); // La URL para mostrar la imagen
+
   useEffect(() => {
     if (!id) return;
     const docRef = doc(db, "moves", id);
@@ -34,7 +38,7 @@ const Contract = () => {
     return () => unsubscribe();
   }, [id]);
 
-  // --- COMPRESIÓN Y SUBIDA ---
+  // --- COMPRESIÓN DE IMAGEN ---
   const compressImage = (file) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -56,19 +60,46 @@ const Contract = () => {
     });
   };
 
-  const handleFileUpload = async (e, type) => {
+  // --- PASO 1: SELECCIONAR ARCHIVO Y MOSTRAR VISTA PREVIA ---
+  const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Guardamos el archivo y creamos una URL temporal para verlo
+    setTempFile(file);
+    setTempPreview(URL.createObjectURL(file));
+  };
+
+  // --- PASO 2: CANCELAR SELECCIÓN ---
+  const handleCancelSelection = () => {
+    setTempFile(null);
+    setTempPreview(null);
+  };
+
+  // --- PASO 3: CONFIRMAR Y SUBIR A FIREBASE ---
+  const handleConfirmUpload = async (type) => {
+    if (!tempFile) return;
     setUploading(true);
+
     try {
-      const imageAsText = await compressImage(file);
+      // Usamos el archivo que teníamos guardado en 'tempFile'
+      const imageAsText = await compressImage(tempFile);
       const updateData = type === 'ine' ? { idUrl: imageAsText } : { addressUrl: imageAsText };
+      
       await updateDoc(doc(db, "moves", id), updateData);
-    } catch (error) { console.error(error); alert("Error al subir imagen."); }
+      
+      // Limpiamos los estados temporales al terminar
+      setTempFile(null);
+      setTempPreview(null);
+
+    } catch (error) { 
+        console.error(error); 
+        alert("Error al subir imagen."); 
+    }
     setUploading(false);
   };
 
-  // --- LÓGICA DE FIRMA (CALIBRADA) ---
+  // --- LÓGICA DE FIRMA ---
   const getCoordinates = (e, canvas) => {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
@@ -137,7 +168,7 @@ const Contract = () => {
     else currentScreen = 'contract';
   }
 
-  // --- FOOTER DE FIRMA ---
+  // Footer de Firma
   const SignatureFooter = () => (
     <div className="mt-auto pt-8 border-t border-gray-300 flex justify-between items-end text-xs">
        <div>
@@ -158,12 +189,41 @@ const Contract = () => {
       
       {/* PANTALLAS PREVIAS (NO IMPRIMIR) */}
       <div className="max-w-xl mx-auto print:hidden">
+        
+        {/* PANTALLA DE SUBIDA: INE */}
         {currentScreen === 'upload_ine' && (
-          <UploadScreen title="INE / Pasaporte" desc="Sube tu identificación oficial" icon={<FileText size={40} />} color="text-cadena-blue" bg="bg-blue-100" onChange={(e) => handleFileUpload(e, 'ine')} uploading={uploading} />
+          <UploadScreen 
+            title="INE / Pasaporte" 
+            desc="Sube tu identificación oficial" 
+            icon={<FileText size={40} />} 
+            color="text-cadena-blue" 
+            bg="bg-blue-100" 
+            // Pasamos los props nuevos:
+            onSelect={handleFileSelect} 
+            preview={tempPreview}
+            onConfirm={() => handleConfirmUpload('ine')}
+            onCancel={handleCancelSelection}
+            uploading={uploading} 
+          />
         )}
+
+        {/* PANTALLA DE SUBIDA: DOMICILIO */}
         {currentScreen === 'upload_address' && (
-          <UploadScreen title="Comprobante de Domicilio" desc="Recibo de luz, agua o internet" icon={<Home size={40} />} color="text-cadena-pink" bg="bg-pink-100" onChange={(e) => handleFileUpload(e, 'address')} uploading={uploading} />
+          <UploadScreen 
+            title="Comprobante de Domicilio" 
+            desc="Recibo de luz, agua o internet" 
+            icon={<Home size={40} />} 
+            color="text-cadena-pink" 
+            bg="bg-pink-100" 
+            // Pasamos los props nuevos:
+            onSelect={handleFileSelect} 
+            preview={tempPreview}
+            onConfirm={() => handleConfirmUpload('address')}
+            onCancel={handleCancelSelection}
+            uploading={uploading} 
+          />
         )}
+
         {currentScreen === 'waiting' && (
           <div className="p-12 text-center bg-white rounded-3xl shadow-xl border-t-8 border-yellow-400">
             <Clock size={80} className="mx-auto text-yellow-500 mb-6 animate-pulse" />
@@ -171,6 +231,7 @@ const Contract = () => {
             <p className="text-gray-500 mt-4">Un asesor está revisando tu información. Te notificaremos por WhatsApp cuando el contrato esté listo.</p>
           </div>
         )}
+
         {currentScreen === 'review_data' && (
           <div className="p-8 bg-white rounded-3xl shadow-xl">
              <h2 className="text-2xl font-bold mb-4">Revisa los Datos Finales</h2>
@@ -187,7 +248,7 @@ const Contract = () => {
         )}
       </div>
 
-      {/* --- EL CONTRATO (Solo visible en paso final) --- */}
+      {/* --- EL CONTRATO --- */}
       {currentScreen === 'contract' && (
         <div className="max-w-[21.5cm] mx-auto">
           
@@ -403,17 +464,51 @@ const Contract = () => {
   );
 };
 
-// COMPONENTE DE SUBIDA
-const UploadScreen = ({ title, desc, icon, color, bg, onChange, uploading }) => (
-  <div className="p-8 text-center bg-white rounded-3xl shadow-xl">
+// --- COMPONENTE DE SUBIDA MEJORADO (CON VISTA PREVIA) ---
+const UploadScreen = ({ title, desc, icon, color, bg, onSelect, preview, onConfirm, onCancel, uploading }) => (
+  <div className="p-8 text-center bg-white rounded-3xl shadow-xl max-w-md mx-auto">
      <div className={`w-20 h-20 ${bg} ${color} rounded-full flex items-center justify-center mx-auto mb-6`}>{icon}</div>
      <h2 className="text-2xl font-bold text-gray-800 mb-2">{title}</h2>
-     <p className="text-gray-500 mb-8">{desc}</p>
-     <label className={`block w-full border-2 border-dashed rounded-2xl p-10 cursor-pointer hover:bg-gray-50 transition ${uploading ? 'opacity-50' : ''}`}>
-        <input type="file" className="hidden" accept="image/*" onChange={onChange} disabled={uploading} />
-        <UploadCloud className={`mx-auto ${color} mb-4`} size={48} />
-        <span className="font-bold text-gray-600">{uploading ? 'Procesando...' : 'Toca para subir foto'}</span>
-     </label>
+     <p className="text-gray-500 mb-6">{desc}</p>
+
+     {/* ¿HAY VISTA PREVIA? */}
+     {preview ? (
+       <div className="animate-fade-in-up">
+         {/* Muestra la imagen seleccionada */}
+         <div className="mb-6 relative rounded-xl overflow-hidden border-2 border-gray-200 shadow-sm max-h-64 mx-auto">
+            <img src={preview} alt="Vista previa" className="w-full h-full object-contain bg-gray-50" />
+         </div>
+         
+         <div className="space-y-3">
+            <button 
+              onClick={onConfirm} 
+              disabled={uploading}
+              className={`w-full py-3 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition ${uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 hover:scale-[1.02]'}`}
+            >
+              {uploading ? (
+                 <>Subiendo...</>
+              ) : (
+                 <><CheckCircle size={20}/> Confirmar y Enviar</>
+              )}
+            </button>
+            
+            <button 
+              onClick={onCancel}
+              disabled={uploading}
+              className="w-full py-3 rounded-xl font-bold text-red-500 bg-red-50 hover:bg-red-100 flex items-center justify-center gap-2 transition"
+            >
+              <Trash2 size={18}/> Cancelar / Cambiar Foto
+            </button>
+         </div>
+       </div>
+     ) : (
+       /* SI NO HAY VISTA PREVIA, MUESTRA EL BOTÓN DE SUBIR */
+       <label className="block w-full border-2 border-dashed border-gray-300 rounded-2xl p-10 cursor-pointer hover:bg-gray-50 hover:border-cadena-blue transition group">
+          <input type="file" className="hidden" accept="image/*" onChange={onSelect} />
+          <UploadCloud className={`mx-auto ${color} mb-4 group-hover:scale-110 transition`} size={48} />
+          <span className="font-bold text-gray-600 group-hover:text-cadena-blue">Toca para seleccionar foto</span>
+       </label>
+     )}
   </div>
 );
 
