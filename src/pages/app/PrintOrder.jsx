@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../config/firebase'; // Ajusta si tu config está en otro nivel
-import { ArrowLeft, Printer, MapPin, Truck, User } from 'lucide-react';
+import { db } from '../../config/firebase'; 
+import { ArrowLeft, Printer, MapPin, Truck, User, Package, Calendar, Square } from 'lucide-react';
 
 const PrintOrder = () => {
   const { id } = useParams();
@@ -21,7 +21,7 @@ const PrintOrder = () => {
           setMove({ id: docSnap.id, ...docSnap.data() });
         } else {
           alert("Orden no encontrada");
-          navigate('/app/dashboard'); // Regresamos al dashboard si falla
+          navigate('/app/dashboard'); 
         }
       } catch (error) {
         console.error("Error cargando orden:", error);
@@ -36,108 +36,122 @@ const PrintOrder = () => {
   if (!move) return null;
 
   return (
-    // Fondo gris en pantalla, Fondo blanco al imprimir
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8 print:bg-white print:p-0 font-sans">
+    // CONFIGURACIÓN DE PÁGINA
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8 print:bg-white print:p-0 font-sans print:text-black">
       
-      {/* --- BARRA DE NAVEGACIÓN (Se oculta al imprimir) --- */}
+      {/* BARRA DE NAVEGACIÓN */}
       <div className="max-w-4xl mx-auto mb-6 flex justify-between items-center print:hidden">
         <button 
-          onClick={() => navigate(-1)} // <--- ESTO SOLUCIONA EL PROBLEMA DE "REGRESAR"
+          onClick={() => navigate(-1)} 
           className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm font-bold text-gray-700 hover:bg-gray-50 transition"
         >
-          <ArrowLeft size={20} /> Volver al Tablero
+          <ArrowLeft size={20} /> Volver
         </button>
         
         <button 
           onClick={() => window.print()} 
           className="flex items-center gap-2 bg-cadena-dark text-white px-6 py-2 rounded-lg shadow-md font-bold hover:bg-black transition"
         >
-          <Printer size={20} /> Imprimir / PDF
+          <Printer size={20} /> Imprimir
         </button>
       </div>
 
-      {/* --- HOJA DE PAPEL (Formato Carta) --- */}
-      <div className="max-w-4xl mx-auto bg-white shadow-2xl p-8 md:p-12 rounded-xl print:shadow-none print:w-full print:max-w-none print:p-0 print:rounded-none">
+      {/* HOJA DE PAPEL */}
+      <div className="max-w-[21.5cm] mx-auto bg-white shadow-2xl p-8 md:p-10 rounded-xl print:shadow-none print:w-full print:max-w-none print:p-0 print:rounded-none print:m-0 flex flex-col min-h-[27.9cm]">
         
-        {/* Encabezado */}
-        <div className="flex justify-between items-start border-b-2 border-black pb-4 mb-8">
+        {/* ENCABEZADO */}
+        <div className="flex justify-between items-end border-b-4 border-black pb-4 mb-6">
           <div>
-            <h1 className="text-3xl font-black uppercase tracking-tighter text-black">Orden de Carga</h1>
-            <p className="text-gray-500 font-bold text-sm tracking-widest">MUDANZAS CADENA • LOGÍSTICA</p>
+            <h1 className="text-4xl font-black uppercase tracking-tighter text-black leading-none">Orden de Carga</h1>
+            <p className="text-gray-500 font-bold text-xs tracking-[0.3em] mt-1">MUDANZAS CADENA • LOGÍSTICA</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-500 uppercase font-bold">Folio de Servicio</p>
-            <p className="text-2xl font-black text-red-600">{move.folio || 'S/N'}</p>
-            <p className="text-xs mt-1 text-gray-400">Fecha Impresión: {new Date().toLocaleDateString()}</p>
-          </div>
-        </div>
-
-        {/* Datos Generales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 text-sm">
-          {/* Cliente */}
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 print:border-black print:bg-transparent">
-            <div className="flex items-center gap-2 font-bold text-cadena-blue mb-2 print:text-black">
-               <User size={18}/> DATOS DEL CLIENTE
+            <p className="text-[10px] text-gray-500 uppercase font-bold">Folio de Servicio</p>
+            <p className="text-3xl font-black text-red-600 leading-none">{move.folio || 'S/N'}</p>
+            <div className="flex items-center justify-end gap-1 mt-1 text-gray-600">
+               <Calendar size={12}/>
+               <p className="text-xs font-bold">{move.date}</p>
             </div>
-            <p className="text-lg font-bold uppercase">{move.client}</p>
-            <p className="mt-1">Tel: {move.phone}</p>
-            <p className="mt-1">Fecha Programada: <span className="font-bold">{move.date}</span></p>
+          </div>
+        </div>
+
+        {/* DATOS GENERALES */}
+        <div className="grid grid-cols-2 gap-6 mb-6 text-sm border-b border-gray-200 pb-6">
+          <div>
+            <div className="flex items-center gap-2 font-black text-black mb-2 uppercase text-xs tracking-wider">
+               <User size={14}/> Cliente / Contacto
+            </div>
+            <div className="pl-2 border-l-2 border-cadena-blue">
+               <p className="text-lg font-bold uppercase leading-tight">{move.client}</p>
+               <p className="mt-0.5 text-gray-600 font-mono">{move.phone}</p>
+            </div>
           </div>
 
-          {/* Ruta */}
-          <div className="space-y-4">
+          <div className="space-y-3">
              <div>
-                <h3 className="font-bold flex items-center gap-2 mb-1 text-xs text-gray-400 uppercase tracking-widest"><MapPin size={14}/> Origen</h3>
-                <p className="uppercase text-gray-800 leading-snug font-medium border-l-4 border-green-400 pl-3">{move.origin}</p>
+                <h3 className="font-bold flex items-center gap-2 mb-0.5 text-[10px] text-gray-400 uppercase tracking-widest"><MapPin size={12}/> Origen</h3>
+                <p className="uppercase text-black text-xs font-bold leading-snug border-l-2 border-green-500 pl-2">{move.origin}</p>
              </div>
              <div>
-                <h3 className="font-bold flex items-center gap-2 mb-1 text-xs text-gray-400 uppercase tracking-widest"><Truck size={14}/> Destino</h3>
-                <p className="uppercase text-gray-800 leading-snug font-medium border-l-4 border-red-400 pl-3">{move.destination}</p>
+                <h3 className="font-bold flex items-center gap-2 mb-0.5 text-[10px] text-gray-400 uppercase tracking-widest"><Truck size={12}/> Destino</h3>
+                <p className="uppercase text-black text-xs font-bold leading-snug border-l-2 border-red-500 pl-2">{move.destination}</p>
              </div>
           </div>
         </div>
 
-        {/* Tabla de Inventario */}
-        <div className="mb-8">
-          <h3 className="font-bold text-sm uppercase tracking-widest mb-3 border-b pb-1">Inventario Declarado</h3>
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="bg-gray-100 print:bg-gray-200 text-xs uppercase">
-                <th className="p-2 text-center w-16 border border-gray-300">Cant.</th>
-                <th className="p-2 text-left border border-gray-300">Descripción</th>
-                <th className="p-2 text-center w-24 border border-gray-300 print:border-black">Check</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.isArray(move.items) && move.items.length > 0 ? (
-                move.items.map((item, idx) => (
-                  <tr key={idx}>
-                    <td className="p-2 text-center font-bold border border-gray-300">{item.quantity}</td>
-                    <td className="p-2 uppercase border border-gray-300">{item.name}</td>
-                    <td className="p-2 border border-gray-300 print:border-black"></td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                   <td colSpan="3" className="p-6 text-center text-gray-400 italic border border-gray-300">
-                     No hay inventario desglosado en el sistema.
-                   </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        {/* INVENTARIO */}
+        <div className="mb-8 flex-grow">
+          <div className="flex justify-between items-center mb-4 border-b border-black pb-1">
+             <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2">
+                <Package size={16}/> Lista de Carga (Checklist)
+             </h3>
+             <span className="text-[10px] uppercase font-bold text-gray-400">Marcar al cargar</span>
+          </div>
+          
+          {Array.isArray(move.items) && move.items.length > 0 ? (
+            <div className="columns-1 md:columns-2 print:columns-2 gap-x-12 gap-y-2">
+              {move.items.map((item, idx) => (
+                <div key={idx} className="break-inside-avoid flex items-center gap-3 border-b border-gray-300 pb-2 mb-2 print:border-gray-400">
+                  <div className="w-5 h-5 border-2 border-black rounded-sm shrink-0 bg-white"></div>
+                  <span className="font-black text-xl text-black min-w-[1.5rem] text-center">{item.quantity}</span>
+                  <span className="leading-tight uppercase text-sm font-bold text-gray-800 pt-0.5">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-6 text-center text-gray-400 italic border-2 border-dashed border-gray-200 rounded-lg">
+               {typeof move.items === 'string' ? move.items : "No hay inventario desglosado en el sistema."}
+            </div>
+          )}
         </div>
 
-        {/* Observaciones y Firmas */}
-        <div className="mt-auto">
-           <div className="border border-gray-300 p-3 rounded mb-16 min-h-[80px]">
-              <p className="font-bold text-[10px] uppercase text-gray-400 mb-1">Notas / Observaciones:</p>
-              <p className="uppercase text-sm">{move.notes || 'Sin observaciones adicionales.'}</p>
+        {/* SECCIÓN DE NOTAS Y FIRMAS (AL PIE DE PÁGINA) */}
+        <div className="mt-auto break-inside-avoid">
+           
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+              {/* 1. NOTAS DEL SISTEMA (Pequeñas, informativas) */}
+              <div className="border border-gray-300 p-2 rounded bg-gray-50 print:bg-white print:border-black">
+                  <p className="font-bold text-[10px] uppercase text-gray-500 mb-1">Instrucciones de Oficina:</p>
+                  <p className="uppercase text-xs font-bold text-black">{move.notes || 'Sin instrucciones especiales.'}</p>
+              </div>
+
+              {/* 2. NOTAS DEL OPERADOR (Grande y vacía para escribir) */}
+              <div className="border-2 border-gray-300 p-2 rounded bg-white print:border-black h-24">
+                  <p className="font-bold text-[10px] uppercase text-gray-400 mb-1">Observaciones / Incidencias (Operador):</p>
+                  {/* Espacio vacío para escribir a mano */}
+              </div>
            </div>
 
-           <div className="flex justify-between items-end text-center text-xs font-bold uppercase">
-              <div className="w-5/12 border-t border-black pt-2">Firma Operador</div>
-              <div className="w-5/12 border-t border-black pt-2">Firma Cliente (Conformidad)</div>
+           {/* FIRMAS */}
+           <div className="flex justify-between items-end text-center text-xs font-bold uppercase gap-8">
+              <div className="w-1/2 border-t-2 border-black pt-2">
+                 <p>Firma Operador</p>
+                 <p className="text-[9px] text-gray-500 font-normal normal-case mt-1">Responsable de carga</p>
+              </div>
+              <div className="w-1/2 border-t-2 border-black pt-2">
+                 <p>Firma Cliente</p>
+                 <p className="text-[9px] text-gray-500 font-normal normal-case mt-1">Conformidad de servicio</p>
+              </div>
            </div>
         </div>
 
