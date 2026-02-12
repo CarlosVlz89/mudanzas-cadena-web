@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase'; 
-import { ArrowLeft, Printer, MapPin, Truck, User, Package, Calendar, FileText } from 'lucide-react';
+import { ArrowLeft, Printer, Share2, MapPin, Truck, User, Package, Calendar, FileText } from 'lucide-react';
 import logo from '../../assets/images/logo.png'; 
 
 const PrintOrder = () => {
@@ -33,6 +33,24 @@ const PrintOrder = () => {
     fetchMove();
   }, [id, navigate]);
 
+  // Lógica para compartir en móviles
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Orden de Carga ${move.folio}`,
+          text: `Orden de carga para ${move.client}`,
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.log('Error al compartir:', error);
+      }
+    } else {
+      alert("Enlace copiado al portapapeles");
+      navigator.clipboard.writeText(window.location.href);
+    }
+  };
+
   if (loading) return <div className="p-10 text-center text-gray-500">Cargando formato...</div>;
   if (!move) return null;
 
@@ -45,55 +63,66 @@ const PrintOrder = () => {
         {`
           @media print {
             @page {
-              margin: 1cm; /* Margen físico seguro */
-              size: letter; /* Tamaño carta */
+              margin: 0;
+              size: letter;
             }
             html, body {
               margin: 0 !important;
               padding: 0 !important;
-              height: auto !important;
-              overflow: visible !important;
+              height: 100% !important;
+            }
+            body * {
+              visibility: hidden;
+            }
+            #root, #root * {
+              visibility: visible;
+            }
+            .print\\:bg-white {
               background-color: white !important;
+              height: 100%;
+              width: 100%;
+              position: absolute;
+              top: 0;
+              left: 0;
             }
-            /* Ocultar elementos del navegador */
-            body > *:not(#root) {
-              display: none !important;
-            }
-            /* Asegurar que el contenido fluya */
-            #root {
-              width: 100% !important;
-              position: relative !important;
-              display: block !important;
-            }
-            /* Forzar fondo blanco y texto negro */
-            * {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
+            /* Forzamos 3 columnas al imprimir */
+            .print\\:columns-3 {
+              column-count: 3 !important;
             }
           }
         `}
       </style>
 
       {/* BARRA DE NAVEGACIÓN */}
-      <div className="max-w-4xl mx-auto mb-6 flex justify-between items-center print:hidden">
+      <div className="max-w-4xl mx-auto mb-6 flex flex-wrap justify-between items-center print:hidden gap-3">
         <button 
           onClick={() => navigate(-1)} 
           className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm font-bold text-gray-700 hover:bg-gray-50 transition"
         >
-          <ArrowLeft size={20} /> Volver
+          <ArrowLeft size={20} /> <span className="hidden sm:inline">Volver</span>
         </button>
         
-        <button 
-          onClick={() => window.print()} 
-          className="flex items-center gap-2 bg-cadena-dark text-white px-6 py-2 rounded-lg shadow-md font-bold hover:bg-black transition"
-        >
-          <Printer size={20} /> Imprimir
-        </button>
+        <div className="flex gap-2">
+            {/* BOTÓN COMPARTIR (Ideal para Móvil) */}
+            <button 
+              onClick={handleShare} 
+              className="flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-lg shadow-sm font-bold hover:bg-blue-200 transition"
+            >
+              <Share2 size={20} /> <span className="hidden sm:inline">Compartir</span>
+            </button>
+
+            {/* BOTÓN IMPRIMIR */}
+            <button 
+              onClick={() => window.print()} 
+              className="flex items-center gap-2 bg-cadena-dark text-white px-6 py-2 rounded-lg shadow-md font-bold hover:bg-black transition"
+            >
+              <Printer size={20} /> <span className="hidden sm:inline">Imprimir</span>
+            </button>
+        </div>
       </div>
 
       {/* HOJA DE PAPEL */}
-      {/* Eliminamos alturas fijas y dejamos que fluya */}
-      <div className="max-w-[21.5cm] mx-auto bg-white shadow-2xl p-8 md:p-10 rounded-xl print:shadow-none print:w-full print:max-w-none print:p-0 print:rounded-none print:m-0 flex flex-col relative">
+      <div className="max-w-[21.5cm] mx-auto bg-white shadow-2xl p-8 md:p-10 rounded-xl print:shadow-none print:w-full print:max-w-none print:p-8 print:rounded-none print:m-0 flex flex-col relative">
         
         {/* ENCABEZADO CON LOGO */}
         <div className="flex justify-between items-end border-b-4 border-black pb-4 mb-6">
@@ -177,8 +206,8 @@ const PrintOrder = () => {
           )}
         </div>
 
-        {/* FIRMAS (CON MARGEN SUPERIOR PARA SEPARARLAS) */}
-        <div className="mt-12 break-inside-avoid border-t-2 border-gray-100 pt-4 print:border-none">
+        {/* FIRMAS */}
+        <div className="mt-8 break-inside-avoid border-t-2 border-gray-100 pt-4 print:border-none">
            <div className="flex justify-between items-end text-center text-xs font-bold uppercase gap-8">
               <div className="w-1/2 border-t-2 border-black pt-2">
                  <p>Firma Operador</p>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase'; 
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, Share2 } from 'lucide-react';
 import logo from '../../assets/images/logo.png'; 
 
 const AdminContractView = () => {
@@ -35,11 +35,27 @@ const AdminContractView = () => {
     fetchMove();
   }, [id, navigate]);
 
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Contrato ${move.folio}`,
+          text: `Contrato de servicio para ${move.client}`,
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.log('Error al compartir:', error);
+      }
+    } else {
+      alert("Enlace copiado al portapapeles");
+      navigator.clipboard.writeText(window.location.href);
+    }
+  };
+
   if (loading) return <div className="p-10 text-center text-gray-500">Cargando contrato...</div>;
   if (!move) return null;
 
   // Estilos de hoja
-  // Ajusté p-12 (3rem) a p-10 para dar un poco más de aire y evitar desbordes sutiles
   const pageClass = "bg-white shadow-2xl p-10 mx-auto max-w-[21.5cm] min-h-[27.9cm] text-black text-sm flex flex-col mb-8 last:mb-0 print:shadow-none print:m-0 print:w-full print:max-w-none print:min-h-[27.9cm] print:h-[27.9cm] print:break-after-page print:mb-0 print:rounded-none relative";
 
   const SignatureFooter = () => (
@@ -60,7 +76,7 @@ const AdminContractView = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8 print:bg-white print:p-0 font-sans">
       
-      {/* --- ESTILOS DE IMPRESIÓN (ELIMINA HOJAS BLANCAS) --- */}
+      {/* --- ESTILOS DE IMPRESIÓN --- */}
       <style>
         {`
           @media print {
@@ -73,22 +89,18 @@ const AdminContractView = () => {
               padding: 0 !important;
               background-color: white !important;
             }
-            /* Ocultar interfaz del navegador */
             body * {
               visibility: hidden;
             }
-            /* Mostrar solo nuestra app */
             #root, #root * {
               visibility: visible;
             }
-            /* Posicionar el contenido al inicio absoluto */
             .print\\:bg-white {
               position: absolute;
               top: 0;
               left: 0;
               width: 100%;
             }
-            /* Ajuste de columnas para el inventario */
             .print\\:columns-3 {
               column-count: 3 !important;
             }
@@ -97,20 +109,29 @@ const AdminContractView = () => {
       </style>
 
       {/* BARRA DE NAVEGACIÓN */}
-      <div className="max-w-4xl mx-auto mb-6 flex justify-between items-center print:hidden">
+      <div className="max-w-4xl mx-auto mb-6 flex flex-wrap justify-between items-center print:hidden gap-3">
         <button 
           onClick={() => navigate(-1)} 
           className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm font-bold text-gray-700 hover:bg-gray-50 transition"
         >
-          <ArrowLeft size={20} /> Volver
+          <ArrowLeft size={20} /> <span className="hidden sm:inline">Volver</span>
         </button>
         
-        <button 
-          onClick={() => window.print()} 
-          className="flex items-center gap-2 bg-cadena-dark text-white px-6 py-2 rounded-lg shadow-md font-bold hover:bg-black transition"
-        >
-          <Printer size={20} /> Imprimir Contrato
-        </button>
+        <div className="flex gap-2">
+            <button 
+              onClick={handleShare} 
+              className="flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-lg shadow-sm font-bold hover:bg-blue-200 transition"
+            >
+              <Share2 size={20} /> <span className="hidden sm:inline">Compartir</span>
+            </button>
+
+            <button 
+              onClick={() => window.print()} 
+              className="flex items-center gap-2 bg-cadena-dark text-white px-6 py-2 rounded-lg shadow-md font-bold hover:bg-black transition"
+            >
+              <Printer size={20} /> <span className="hidden sm:inline">Imprimir Contrato</span>
+            </button>
+        </div>
       </div>
 
       {/* --- PÁGINA 1: PORTADA --- */}
@@ -155,7 +176,7 @@ const AdminContractView = () => {
         <SignatureFooter />
       </div>
 
-      {/* --- PÁGINA 2: INVENTARIO (CORREGIDO 3 COLUMNAS) --- */}
+      {/* --- PÁGINA 2: INVENTARIO --- */}
       <div className={pageClass}>
         <div>
           <h2 className="text-2xl font-bold text-center mb-2">INVENTARIO DECLARADO</h2>
@@ -164,7 +185,6 @@ const AdminContractView = () => {
           </p>
           <div className="flex-1 mb-8">
             {move.items && move.items.length > 0 ? (
-              // CAMBIO: print:columns-3 y reduje el gap a 4 para que quepan mejor
               <div className="columns-2 md:columns-3 print:columns-3 gap-4">
                   {move.items.map((item, i) => (
                     <div key={i} className="break-inside-avoid mb-2 border-b border-gray-100 pb-1 flex items-center gap-2 text-sm">
@@ -189,18 +209,17 @@ const AdminContractView = () => {
       <div className={pageClass}>
         <div className="mb-8">
           <h2 className="text-xl font-bold text-center mb-4">CONDICIONES DEL SERVICIO</h2>
-          <div className="text-[10px] leading-relaxed text-justify space-y-2">
-            <p>1. Se deberá realizar un anticipo del 50% para poder confirmar su servicio.</p>
-            <p>2. El valor total a pagar debe ser liquidado al momento que la unidad se encuentre en el destino para poder comenzar con la descarga.</p>
-            <p>3. El valor del flete incluye maniobras de carga y descarga.</p>
-            <p>4. El valor del flete incluye cubierta a muebles con hule poliestrech y protección con colchonetas a bordo de la unidad de transporte.</p>
-            <p>5. Se deberán de marcar las cajas que sean frágiles y de igual manera informárselo al operador para tener un cuidado especial de las mismas.</p>
-            <p>6. Todos los muebles están susceptibles a daños, en caso de requerir un empaque especializado para su mayor protección, tendrá un costo adicional.</p>
-            <p>7. Al firmar este contrato el C. se hace responsable de las pertenencias que entregue al operador, desde el momento de la carga hasta la descarga. Todos los artículos "empacados por el cliente" viajan por cuenta y riesgo, esto quiere decir, que no nos haremos responsables por las condiciones en las que lleguen a su destino, debido a que desconocemos el contenido y condiciones de origen de estas, no se aceptan reclamaciones.</p>
-            <p>8. Queda prohibido transportar animales vivos o muertos, armas de fuego, sustancias toxicas y plantas.</p>
-            <p>9. En caso de salir menaje extra a la hora de la carga se realizará la modificación de su cotización.</p>
-            <p>10. En caso que se requieran realizar maniobras extras no reportadas por el cliente, se cobrarán por separado.</p>
-            <p>11. La empresa ofrece una póliza de seguro por el 5% adicional del valor total del servicio, de $50,000.00 como valor mínimo de
+          <p>1. Se deberá realizar un anticipo del 50% para poder confirmar su servicio.</p>
+              <p>2. El valor total a pagar debe ser liquidado al momento que la unidad se encuentre en el destino para poder comenzar con la descarga.</p>
+              <p>3. El valor del flete incluye maniobras de carga y descarga.</p>
+              <p>4. El valor del flete incluye cubierta a muebles con hule poliestrech y protección con colchonetas a bordo de la unidad de transporte.</p>
+              <p>5. Se deberán de marcar las cajas que sean frágiles y de igual manera informárselo al operador para tener un cuidado especial de las mismas.</p>
+              <p>6. Todos los muebles están susceptibles a daños, en caso de requerir un empaque especializado para su mayor protección, tendrá un costo adicional.</p>
+              <p>7. Al firmar este contrato el C. se hace responsable de las pertenencias que entregue al operador, desde el momento de la carga hasta la descarga. Todos los artículos "empacados por el cliente" viajan por cuenta y riesgo, esto quiere decir, que no nos haremos responsables por las condiciones en las que lleguen a su destino, debido a que desconocemos el contenido y condiciones de origen de estas, no se aceptan reclamaciones.</p>
+              <p>8. Queda prohibido transportar animales vivos o muertos, armas de fuego, sustancias toxicas y plantas.</p>
+              <p>9. En caso de salir menaje extra a la hora de la carga se realizará la modificación de su cotización.</p>
+              <p>10. En caso que se requieran realizar maniobras extras no reportadas por el cliente, se cobrarán por separado.</p>
+              <p>11. La empresa ofrece una póliza de seguro por el 5% adicional del valor total del servicio, de $50,000.00 como valor mínimo de
                   embarque para la modalidad compartida o una póliza de seguro por el 10% adicional del valor de total del servicio, de $50,000.00
                   hasta $100,000.00 como límite máximo por embarque para la modalidad exclusiva, por los hechos que la ley señala como riesgos
                   ordinarios de tránsito, robo total con violencia y/o asalto. En caso de que el valor declarado de sus bienes exceda estos montos, se
@@ -210,12 +229,10 @@ const AdminContractView = () => {
                   artículos, embalajes, que viajen en el mismo contenedor, bajo ninguna circunstancia se contrata el seguro por un artículo u embalaje
                   en especial. En caso de no requerir el servicio de póliza de seguro, el cliente acepta que su mercancía viaje por cuenta y riesgo de el
                   mismo.</p>
-            <p>12. MUDANZAS CADENA se compromete a realizar la recolección y la entrega establecida por ambas partes.</p>
-            <p>13. El cliente que es quien remite el servicio, encomienda a “MUDANZAS CADENA”, y este se obliga a transportar en sujeción de las leyes, aquellos bienes descritos en el presente documento al lugar del destino que señale el cliente.</p>
-            <p>14. En caso de que el cliente requiera hacer algún cambio o cancelación, se podrá realizar siempre y cuando este sea 24 hrs antes de la hora en la que se agendó la recolección del servicio, de no ser así deberá pagar el 20% del costo total por los gastos de operación.</p>
-            <p>15. No nos hacemos responsables de las cajas que se entreguen empacadas y selladas por la mano del mismo cliente, ya que desconocemos el contenido y el estado de lo que contenga el interior.</p>
-            <p className="font-bold text-center mt-4">AL FIRMAR ESTE CONTRATO, ESTÁ ACEPTANDO LAS CONDICIONES DE SERVICIO ANTES MENCIONADAS.</p>
-          </div>
+              <p>12. MUDANZAS CADENA se compromete a realizar la recolección y la entrega establecida por ambas partes.</p>
+              <p>13. El cliente que es quien remite el servicio, encomienda a “MUDANZAS CADENA”, y este se obliga a transportar en sujeción de las leyes, aquellos bienes descritos en el presente documento al lugar del destino que señale el cliente.</p>
+              <p>14. En caso de que el cliente requiera hacer algún cambio o cancelación, se podrá realizar siempre y cuando este sea 24 hrs antes de la hora en la que se agendó la recolección del servicio, de no ser así deberá pagar el 20% del costo total por los gastos de operación.</p>
+              <p>15. No nos hacemos responsables de las cajas que se entreguen empacadas y selladas por la mano del mismo cliente, ya que desconocemos el contenido y el estado de lo que contenga el interior.</p>
         </div>
         <SignatureFooter />
       </div>
