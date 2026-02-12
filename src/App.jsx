@@ -14,6 +14,7 @@ import Login from './pages/app/Login';
 import Dashboard from './pages/app/Dashboard';
 import WorkOrder from './pages/app/WorkOrder';
 import PrintOrder from './pages/app/PrintOrder';
+import AdminContractView from './pages/app/AdminContractView';
 
 // COMPONENTES UI
 import FloatingMascot from './components/ui/FloatingMascot';
@@ -55,6 +56,7 @@ function App() {
         <Route path="/contrato/:id" element={<Contract />} />
         <Route path="/trabajadores" element={<WorkOrder />} />
         <Route path="/orden-carga/:id" element={<PrintOrder />} />
+        <Route path="/admin/ver-contrato/:id" element={<AdminContractView />} />
       </Routes>
     </>
   );

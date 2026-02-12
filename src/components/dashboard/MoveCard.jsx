@@ -1,6 +1,6 @@
-import { MapPin, Truck, MessageCircle, Printer, CreditCard, Edit3, ClipboardList, Trash2, CheckCircle } from 'lucide-react';
+import { MapPin, Truck, MessageCircle, Printer, CreditCard, Edit3, ClipboardList, Trash2, CheckCircle, FileText } from 'lucide-react';
 
-const MoveCard = ({ move, onEdit, onDelete, onCopyLink, onViewId, onPrintOrder, isPending }) => {
+const MoveCard = ({ move, onEdit, onDelete, onCopyLink, onViewId, onPrintOrder, onViewContract, isPending }) => {
   const hasItems = Array.isArray(move.items) && move.items.length > 0;
   
   return (
@@ -26,10 +26,21 @@ const MoveCard = ({ move, onEdit, onDelete, onCopyLink, onViewId, onPrintOrder, 
           <div className={`mt-2 inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide text-white ${move.status === 'Contrato Firmado' ? 'bg-purple-500' : 'bg-cadena-blue'}`}>{move.status}</div>
         </div>
         <div className="flex gap-2 mt-4">
+          {/* BOTÓN NUEVO: VER CONTRATO */}
+          {onViewContract && (
+            <button onClick={onViewContract} title="Ver Contrato" className="p-2.5 text-blue-500 bg-blue-50 rounded-xl hover:bg-blue-100 transition">
+                <FileText size={20}/>
+            </button>
+          )}
+
           {onPrintOrder && <button onClick={onPrintOrder} className="p-2.5 text-orange-600 bg-orange-50 rounded-xl hover:bg-orange-100 transition"><Printer size={20}/></button>}
+          
           <button onClick={onViewId} className="p-2.5 text-green-600 bg-green-50 rounded-xl hover:bg-green-100 transition"><CreditCard size={20}/></button>
+          
           <button onClick={onEdit} className="p-2.5 text-white bg-cadena-blue rounded-xl shadow-md hover:bg-blue-700 transition hover:-translate-y-0.5"><Edit3 size={20}/></button>
+          
           {onCopyLink && <button onClick={onCopyLink} className="p-2.5 text-purple-600 bg-purple-50 rounded-xl hover:bg-purple-100 transition"><ClipboardList size={20}/></button>}
+          
           <button onClick={onDelete} className="p-2.5 text-red-400 bg-red-50 rounded-xl hover:bg-red-100 transition"><Trash2 size={20}/></button>
         </div>
       </div>

@@ -6,10 +6,8 @@ import {
   PenTool, Printer, CheckCircle, UploadCloud, ShieldCheck, 
   Clock, FileText, Home, ArrowRight, MapPin, X, Trash2, Image as ImageIcon
 } from 'lucide-react';
-// 1. IMPORTAMOS EL LOGO
 import logo from '../../assets/images/logo.png';
 
-// Estilos para salto de página al imprimir
 const pageBreakClass = "print:break-after-page print:min-h-screen print:flex print:flex-col print:justify-between relative bg-white shadow-lg p-12 mb-10 mx-auto max-w-[21.5cm] min-h-[27.9cm] text-gray-800 print:shadow-none print:m-0 print:w-full";
 
 const Contract = () => {
@@ -21,9 +19,9 @@ const Contract = () => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
 
-  // --- NUEVOS ESTADOS PARA LA VISTA PREVIA ---
-  const [tempFile, setTempFile] = useState(null);       // El archivo real
-  const [tempPreview, setTempPreview] = useState(null); // La URL para mostrar la imagen
+  // Estados para vista previa
+  const [tempFile, setTempFile] = useState(null);       
+  const [tempPreview, setTempPreview] = useState(null); 
 
   useEffect(() => {
     if (!id) return;
@@ -31,6 +29,10 @@ const Contract = () => {
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
+        // MIGRACIÓN AUTOMÁTICA: Si existe el campo viejo 'idUrl', lo asignamos al frente
+        if (data.idUrl && !data.idUrlFront) {
+            data.idUrlFront = data.idUrl; 
+        }
         setMove({ id: docSnap.id, ...data });
       } else { alert("Enlace no válido."); }
       setLoading(false);
@@ -38,7 +40,6 @@ const Contract = () => {
     return () => unsubscribe();
   }, [id]);
 
-  // --- COMPRESIÓN DE IMAGEN ---
   const compressImage = (file) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -60,35 +61,37 @@ const Contract = () => {
     });
   };
 
-  // --- PASO 1: SELECCIONAR ARCHIVO Y MOSTRAR VISTA PREVIA ---
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    // Guardamos el archivo y creamos una URL temporal para verlo
     setTempFile(file);
     setTempPreview(URL.createObjectURL(file));
   };
 
-  // --- PASO 2: CANCELAR SELECCIÓN ---
   const handleCancelSelection = () => {
     setTempFile(null);
     setTempPreview(null);
   };
 
-  // --- PASO 3: CONFIRMAR Y SUBIR A FIREBASE ---
   const handleConfirmUpload = async (type) => {
     if (!tempFile) return;
     setUploading(true);
 
     try {
-      // Usamos el archivo que teníamos guardado en 'tempFile'
       const imageAsText = await compressImage(tempFile);
-      const updateData = type === 'ine' ? { idUrl: imageAsText } : { addressUrl: imageAsText };
+      
+      // Lógica para guardar en el campo correcto
+      let updateData = {};
+      if (type === 'ine_front') {
+          updateData = { idUrlFront: imageAsText, idUrl: imageAsText }; // Guardamos en ambos por compatibilidad
+      } else if (type === 'ine_back') {
+          updateData = { idUrlBack: imageAsText };
+      } else if (type === 'address') {
+          updateData = { addressUrl: imageAsText };
+      }
       
       await updateDoc(doc(db, "moves", id), updateData);
       
-      // Limpiamos los estados temporales al terminar
       setTempFile(null);
       setTempPreview(null);
 
@@ -153,14 +156,22 @@ const Contract = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-gray-500">Cargando...</div>;
   if (!move) return <div className="min-h-screen flex items-center justify-center text-red-500">Enlace no válido.</div>;
 
-  // Lógica de Vistas
-  const missingIne = !move.idUrl;
+  // --- LÓGICA DE VISTAS ACTUALIZADA ---
+  const missingIneFront = !move.idUrlFront; // Falta frente
+  const missingIneBack = !move.idUrlBack;   // Falta reverso
   const missingAddress = !move.addressUrl;
-  const isWaitingForApproval = !missingIne && !missingAddress && move.status === 'Pendiente';
+  
+  // Está completo si tiene los 3 documentos
+  const isDocsComplete = !missingIneFront && !missingIneBack && !missingAddress;
+  
+  const isWaitingForApproval = isDocsComplete && move.status === 'Pendiente';
   const isAuthorized = ['Programada', 'Contrato Firmado', 'En Carga', 'En Tránsito', 'Finalizada'].includes(move.status);
 
   let currentScreen = 'loading';
-  if (missingIne) currentScreen = 'upload_ine';
+  
+  // Orden de pantallas:
+  if (missingIneFront) currentScreen = 'upload_ine_front';
+  else if (missingIneBack) currentScreen = 'upload_ine_back';
   else if (missingAddress) currentScreen = 'upload_address';
   else if (isWaitingForApproval) currentScreen = 'waiting';
   else if (isAuthorized) {
@@ -168,7 +179,6 @@ const Contract = () => {
     else currentScreen = 'contract';
   }
 
-  // Footer de Firma
   const SignatureFooter = () => (
     <div className="mt-auto pt-8 border-t border-gray-300 flex justify-between items-end text-xs">
        <div>
@@ -190,24 +200,39 @@ const Contract = () => {
       {/* PANTALLAS PREVIAS (NO IMPRIMIR) */}
       <div className="max-w-xl mx-auto print:hidden">
         
-        {/* PANTALLA DE SUBIDA: INE */}
-        {currentScreen === 'upload_ine' && (
+        {/* PANTALLA 1: INE FRENTE */}
+        {currentScreen === 'upload_ine_front' && (
           <UploadScreen 
-            title="INE / Pasaporte" 
-            desc="Sube tu identificación oficial" 
+            title="INE / ID (Frente)" 
+            desc="Sube la parte delantera de tu identificación" 
             icon={<FileText size={40} />} 
             color="text-cadena-blue" 
             bg="bg-blue-100" 
-            // Pasamos los props nuevos:
             onSelect={handleFileSelect} 
             preview={tempPreview}
-            onConfirm={() => handleConfirmUpload('ine')}
+            onConfirm={() => handleConfirmUpload('ine_front')}
             onCancel={handleCancelSelection}
             uploading={uploading} 
           />
         )}
 
-        {/* PANTALLA DE SUBIDA: DOMICILIO */}
+        {/* PANTALLA 2: INE REVERSO (NUEVA) */}
+        {currentScreen === 'upload_ine_back' && (
+          <UploadScreen 
+            title="INE / ID (Reverso)" 
+            desc="Ahora sube la parte trasera" 
+            icon={<FileText size={40} />} 
+            color="text-cadena-blue" 
+            bg="bg-blue-100" 
+            onSelect={handleFileSelect} 
+            preview={tempPreview}
+            onConfirm={() => handleConfirmUpload('ine_back')}
+            onCancel={handleCancelSelection}
+            uploading={uploading} 
+          />
+        )}
+
+        {/* PANTALLA 3: DOMICILIO */}
         {currentScreen === 'upload_address' && (
           <UploadScreen 
             title="Comprobante de Domicilio" 
@@ -215,7 +240,6 @@ const Contract = () => {
             icon={<Home size={40} />} 
             color="text-cadena-pink" 
             bg="bg-pink-100" 
-            // Pasamos los props nuevos:
             onSelect={handleFileSelect} 
             preview={tempPreview}
             onConfirm={() => handleConfirmUpload('address')}
@@ -228,7 +252,7 @@ const Contract = () => {
           <div className="p-12 text-center bg-white rounded-3xl shadow-xl border-t-8 border-yellow-400">
             <Clock size={80} className="mx-auto text-yellow-500 mb-6 animate-pulse" />
             <h2 className="text-2xl font-bold">Validando Documentación</h2>
-            <p className="text-gray-500 mt-4">Un asesor está revisando tu información. Te notificaremos por WhatsApp cuando el contrato esté listo.</p>
+            <p className="text-gray-500 mt-4">Tus documentos (INE Frente, Reverso y Domicilio) han sido recibidos. Un asesor los revisará en breve.</p>
           </div>
         )}
 
@@ -255,13 +279,16 @@ const Contract = () => {
           {/* --- PÁGINA 1: PORTADA Y DATOS --- */}
           <div className={pageBreakClass}>
             
-            {/* 2. ENCABEZADO MEJORADO: LOGO IZQUIERDA - FOLIO DERECHA */}
+            {/* ENCABEZADO */}
             <div className="flex justify-between items-end border-b-4 border-cadena-pink pb-4 mb-8">
               
-              {/* Lado Izquierdo: Logo */}
+              {/* Lado Izquierdo: Logo + Slogan (CAMBIO AQUÍ) */}
               <div className="flex flex-col items-start">
                 <img src={logo} alt="Mudanzas Cadena" className="h-24 object-contain object-left -ml-3" />
-                <p className="text-xs tracking-[0.2em] text-gray-400 font-bold uppercase mt-1 ml-1">Logística y Transporte</p>
+                {/* Antes decía "Logística y Transporte", ahora dice el slogan */}
+                <p className="text-xs tracking-[0.2em] text-gray-400 font-bold uppercase mt-1 ml-1">
+                  COTIZA HOY, MÚDATE HOY
+                </p>
               </div>
 
               {/* Lado Derecho: Folio y Fecha */}
@@ -275,6 +302,7 @@ const Contract = () => {
 
             </div>
 
+            {/* CONTENIDO DATOS */}
             <div className="space-y-6 text-sm uppercase">
                <div className="border p-4 rounded bg-gray-50">
                   <p><strong>CLIENTE:</strong> {move.client}</p>
@@ -295,28 +323,27 @@ const Contract = () => {
                   <p className="mt-2"><strong>FECHA TENTATIVA DE CARGA:</strong> <span className="text-cadena-blue font-bold">{move.date || 'Por definir'}</span></p>
                </div>
             </div>
-            <div className="mt-auto text-center font-bold text-xl text-gray-400 italic">COTIZA HOY, MÚDATE HOY</div>
+
+            {/* ESPACIO VACÍO (Aquí borré el slogan repetido) */}
+            <div className="mt-auto"></div>
+            
             <SignatureFooter />
           </div>
 
-          {/* --- PÁGINA 2: INVENTARIO (MODIFICADO A 3 COLUMNAS) --- */}
+          {/* INVENTARIO */}
           <div className={pageBreakClass}>
             <h2 className="text-2xl font-bold text-center mb-2">INVENTARIO DECLARADO</h2>
             <p className="text-center text-xs text-gray-400 mb-6 uppercase tracking-widest border-b pb-4">
               Revisado y Autorizado por el Cliente
             </p>
-            
             <div className="flex-1">
                {move.items && move.items.length > 0 ? (
-                 /* AQUI ESTA EL TRUCO: 'columns-3' crea 3 columnas automáticas */
                  <div className="columns-2 md:columns-3 gap-8">
                     {move.items.map((item, i) => (
                        <div key={i} className="break-inside-avoid mb-2 border-b border-gray-100 pb-1 flex items-center gap-3 text-sm">
-                          {/* Cantidad en un cuadrito gris para resaltar */}
                           <span className="font-bold bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs min-w-[2rem] text-center">
                             {item.quantity}
                           </span>
-                          {/* Nombre del mueble */}
                           <span className="leading-tight">{item.name}</span>
                        </div>
                     ))}
@@ -327,13 +354,11 @@ const Contract = () => {
                  </div>
                )}
             </div>
-            
-            {/* Espacio extra por si la lista es corta, empuja el footer abajo */}
             <div className="mt-auto"></div>
             <SignatureFooter />
           </div>
 
-          {/* --- PÁGINA 3: CONDICIONES --- */}
+          {/* CONDICIONES */}
           <div className={pageBreakClass}>
             <h2 className="text-xl font-bold text-center mb-4">CONDICIONES DEL SERVICIO</h2>
             <div className="text-[10px] leading-relaxed text-justify space-y-2 flex-1">
@@ -347,9 +372,18 @@ const Contract = () => {
               <p>8. Queda prohibido transportar animales vivos o muertos, armas de fuego, sustancias toxicas y plantas.</p>
               <p>9. En caso de salir menaje extra a la hora de la carga se realizará la modificación de su cotización.</p>
               <p>10. En caso que se requieran realizar maniobras extras no reportadas por el cliente, se cobrarán por separado.</p>
-              <p>11. La empresa ofrece una póliza de seguro por el 5% adicional del valor total del servicio... En caso de no requerir el servicio de póliza de seguro, el cliente acepta que su mercancía viaje por cuenta y riesgo de el mismo.</p>
+              <p>11. La empresa ofrece una póliza de seguro por el 5% adicional del valor total del servicio, de $50,000.00 como valor mínimo de
+                  embarque para la modalidad compartida o una póliza de seguro por el 10% adicional del valor de total del servicio, de $50,000.00
+                  hasta $100,000.00 como límite máximo por embarque para la modalidad exclusiva, por los hechos que la ley señala como riesgos
+                  ordinarios de tránsito, robo total con violencia y/o asalto. En caso de que el valor declarado de sus bienes exceda estos montos, se
+                  le da la opción al cliente de ampliar su póliza de seguro para que su carga vaya asegurada por completo. La territorialidad de la
+                  póliza de seguro consta de (Bodega – Bodega), es decir, desde el momento que sale de Bodega MUDANZAS CADENA hasta el
+                  DESTINO FINAL del cliente. La Póliza de Seguro compartida y exclusiva se considera por todo el embarque, es decir, sobre todos los
+                  artículos, embalajes, que viajen en el mismo contenedor, bajo ninguna circunstancia se contrata el seguro por un artículo u embalaje
+                  en especial. En caso de no requerir el servicio de póliza de seguro, el cliente acepta que su mercancía viaje por cuenta y riesgo de el
+                  mismo.</p>
               <p>12. MUDANZAS CADENA se compromete a realizar la recolección y la entrega establecida por ambas partes.</p>
-              <p>13. El cliente que es quien remite el servicio, encomienda a "MUDANZAS CADENA", y este se obliga a transportar en sujeción de las leyes...</p>
+              <p>13. El cliente que es quien remite el servicio, encomienda a “MUDANZAS CADENA”, y este se obliga a transportar en sujeción de las leyes, aquellos bienes descritos en el presente documento al lugar del destino que señale el cliente.</p>
               <p>14. En caso de que el cliente requiera hacer algún cambio o cancelación, se podrá realizar siempre y cuando este sea 24 hrs antes de la hora en la que se agendó la recolección del servicio, de no ser así deberá pagar el 20% del costo total por los gastos de operación.</p>
               <p>15. No nos hacemos responsables de las cajas que se entreguen empacadas y selladas por la mano del mismo cliente, ya que desconocemos el contenido y el estado de lo que contenga el interior.</p>
               <p className="font-bold text-center mt-4">AL FIRMAR ESTE CONTRATO, ESTÁ ACEPTANDO LAS CONDICIONES DE SERVICIO ANTES MENCIONADAS.</p>
@@ -357,7 +391,7 @@ const Contract = () => {
             <SignatureFooter />
           </div>
 
-          {/* --- PÁGINA 4: COSTOS --- */}
+          {/* COSTOS */}
           <div className={pageBreakClass}>
              <h2 className="text-xl font-bold text-center mb-8">COSTO DEL SERVICIO</h2>
              <table className="w-full border-2 border-black mb-8 text-sm">
@@ -401,7 +435,7 @@ const Contract = () => {
              <SignatureFooter />
           </div>
 
-          {/* --- PÁGINA 5: PAGOS --- */}
+          {/* PAGOS */}
           <div className={pageBreakClass}>
              <h2 className="text-xl font-bold text-center mb-8">FORMAS DE PAGO / CONTACTO</h2>
              <div className="space-y-6 text-sm flex-1 text-center">
@@ -424,7 +458,7 @@ const Contract = () => {
              <SignatureFooter />
           </div>
 
-          {/* ZONA DE ACEPTACIÓN (PANTALLA) */}
+          {/* FIRMA (Pantalla) */}
           <div className="mt-8 mb-16 p-8 bg-gray-100 border-2 border-dashed border-gray-300 rounded-3xl text-center print:hidden">
              {move.status !== 'Contrato Firmado' && !move.signature ? (
                 <>
@@ -450,10 +484,9 @@ const Contract = () => {
                 <div className="bg-white p-8 rounded-2xl shadow-lg border border-green-200 inline-block">
                    <div className="flex items-center justify-center w-16 h-16 bg-green-100 text-green-600 rounded-full mx-auto mb-4"><CheckCircle size={40} /></div>
                    <h3 className="text-2xl font-bold text-green-800 mb-2">¡Contrato Firmado!</h3>
-                   <p className="text-green-700 mb-6">Tu mudanza está 100% confirmada.</p>
-                   <button onClick={() => window.print()} className="bg-cadena-dark text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 mx-auto hover:bg-black transition">
-                      <Printer size={20}/> Descargar PDF Firmado
-                   </button>
+                   <p className="text-xs text-gray-500">
+                     Hemos recibido tu firma correctamente. Tu asesor te enviará el documento final en breve.
+                   </p>
                 </div>
              )}
           </div>
@@ -464,17 +497,15 @@ const Contract = () => {
   );
 };
 
-// --- COMPONENTE DE SUBIDA MEJORADO (CON VISTA PREVIA) ---
+// --- COMPONENTE DE SUBIDA ---
 const UploadScreen = ({ title, desc, icon, color, bg, onSelect, preview, onConfirm, onCancel, uploading }) => (
   <div className="p-8 text-center bg-white rounded-3xl shadow-xl max-w-md mx-auto">
      <div className={`w-20 h-20 ${bg} ${color} rounded-full flex items-center justify-center mx-auto mb-6`}>{icon}</div>
      <h2 className="text-2xl font-bold text-gray-800 mb-2">{title}</h2>
      <p className="text-gray-500 mb-6">{desc}</p>
 
-     {/* ¿HAY VISTA PREVIA? */}
      {preview ? (
        <div className="animate-fade-in-up">
-         {/* Muestra la imagen seleccionada */}
          <div className="mb-6 relative rounded-xl overflow-hidden border-2 border-gray-200 shadow-sm max-h-64 mx-auto">
             <img src={preview} alt="Vista previa" className="w-full h-full object-contain bg-gray-50" />
          </div>
@@ -485,24 +516,14 @@ const UploadScreen = ({ title, desc, icon, color, bg, onSelect, preview, onConfi
               disabled={uploading}
               className={`w-full py-3 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition ${uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 hover:scale-[1.02]'}`}
             >
-              {uploading ? (
-                 <>Subiendo...</>
-              ) : (
-                 <><CheckCircle size={20}/> Confirmar y Enviar</>
-              )}
+              {uploading ? <>Subiendo...</> : <><CheckCircle size={20}/> Confirmar y Enviar</>}
             </button>
-            
-            <button 
-              onClick={onCancel}
-              disabled={uploading}
-              className="w-full py-3 rounded-xl font-bold text-red-500 bg-red-50 hover:bg-red-100 flex items-center justify-center gap-2 transition"
-            >
+            <button onClick={onCancel} disabled={uploading} className="w-full py-3 rounded-xl font-bold text-red-500 bg-red-50 hover:bg-red-100 flex items-center justify-center gap-2 transition">
               <Trash2 size={18}/> Cancelar / Cambiar Foto
             </button>
          </div>
        </div>
      ) : (
-       /* SI NO HAY VISTA PREVIA, MUESTRA EL BOTÓN DE SUBIR */
        <label className="block w-full border-2 border-dashed border-gray-300 rounded-2xl p-10 cursor-pointer hover:bg-gray-50 hover:border-cadena-blue transition group">
           <input type="file" className="hidden" accept="image/*" onChange={onSelect} />
           <UploadCloud className={`mx-auto ${color} mb-4 group-hover:scale-110 transition`} size={48} />

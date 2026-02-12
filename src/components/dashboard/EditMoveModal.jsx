@@ -4,30 +4,61 @@ import { getStorage, ref, deleteObject } from "firebase/storage";
 import { db } from '../../config/firebase';
 import { 
   Calculator, Trash2, X, Plus, Save, Eye, Package, Receipt, UploadCloud, Maximize2,
-  Box, Sofa, Table2, Bed, Refrigerator, WashingMachine, Tv, Monitor, 
-  Bike, CarFront, Frame, Music2, Archive, Container
+  ChevronDown, ChevronUp, Sofa, BedDouble, Utensils, Tv, Briefcase, Box
 } from 'lucide-react';
 
-const FURNITURE_ITEMS = [
-  { id: 'caja_ch', label: 'Caja Chica', icon: <Box size={18} /> },
-  { id: 'caja_gd', label: 'Caja Grande', icon: <Box size={22} /> },
-  { id: 'sala', label: 'Sillón / Sala', icon: <Sofa size={20} /> },
-  { id: 'comedor', label: 'Mesa Comedor', icon: <Table2 size={20} /> },
-  { id: 'cama_ind', label: 'Cama Indiv.', icon: <Bed size={18} /> },
-  { id: 'cama_mat', label: 'Cama Matrim.', icon: <Bed size={20} /> },
-  { id: 'cama_ks', label: 'Cama King Size', icon: <Bed size={22} /> },
-  { id: 'refri', label: 'Refrigerador', icon: <Refrigerator size={20} /> },
-  { id: 'lavadora', label: 'Lavadora/Sec', icon: <WashingMachine size={20} /> },
-  { id: 'tv', label: 'TV / Pantalla', icon: <Tv size={20} /> },
-  { id: 'escritorio', label: 'Escritorio/Office', icon: <Monitor size={20} /> },
-  { id: 'bici', label: 'Bicicleta', icon: <Bike size={20} /> },
-  { id: 'moto', label: 'Motocicleta', icon: <Bike size={22} className="text-slate-800" /> },
-  { id: 'auto', label: 'Automóvil', icon: <CarFront size={22} /> },
-  { id: 'arte', label: 'Obra de Arte', icon: <Frame size={20} /> },
-  { id: 'piano', label: 'Piano', icon: <Music2 size={20} /> },
-  { id: 'fuerte', label: 'Caja Fuerte', icon: <Archive size={20} /> },
-  { id: 'pallet', label: 'Pallet / Carga', icon: <Container size={20} /> },
-];
+// --- CATÁLOGO COMPLETO ---
+const FULL_CATALOG = {
+  "Sala y Estancia": {
+    icon: <Sofa size={18} />,
+    items: [
+      "Sillón 1 Plaza", "Sillón 2 Plazas", "Sillón 3 Plazas", "Sofá Cama", 
+      "Sala en L (Seccional)", "Mesa de Centro", "Librero", 
+      "Mueble de TV / Entretenimiento", 
+      "TV Pantalla (24\" - 42\")", "TV Pantalla (43\" - 55\")", "TV Pantalla (60\" - 85\")",
+      "Ventilador", "Espejo Grande", "Cuadro / Arte"
+    ]
+  },
+  "Comedor y Cocina": {
+    icon: <Utensils size={18} />,
+    items: [
+      "Mesa Comedor (Madera)", "Mesa Comedor (Vidrio)", "Mesa Comedor (Tubular)",
+      "Sillas de Comedor (Unitario)", "Bancos / Taburetes", "Vitrina / Credenza", 
+      "Refrigerador Chico (1 pta)", "Refrigerador Grande (2 ptas)", "Refrigerador Duplex", "Frigobar / Minibar",
+      "Estufa", "Microondas", "Alacena"
+    ]
+  },
+  "Recámara": {
+    icon: <BedDouble size={18} />,
+    items: [
+      "Base+Colchón Individual", "Base+Colchón Matrimonial", "Base+Colchón Queen", "Base+Colchón King",
+      "Cabecera Individual", "Cabecera Matrimonial", "Cabecera Queen", "Cabecera King",
+      "Litera", "Cuna de Bebé", 
+      "Buró", "Tocador / Peinador", "Ropero / Closet"
+    ]
+  },
+  "Lavado y Baño": {
+    icon: <UploadCloud size={18} />,
+    items: [
+      "Lavadora", "Secadora", "Centro de Lavado (Torre)", 
+      "Botes / Cestos", "Mueble de Baño"
+    ]
+  },
+  "Oficina y Electrónica": {
+    icon: <Briefcase size={18} />,
+    items: [
+      "Escritorio", "Silla de Oficina", "Computadora / Monitor", "Impresora / Multifuncional"
+    ]
+  },
+  "Cajas y Bultos": {
+    icon: <Box size={18} />,
+    items: [
+      "Caja Cartón Chica", "Caja Cartón Mediana", "Caja Cartón Grande", 
+      "Caja Plástico Chica", "Caja Plástico Mediana", "Caja Plástico Grande", 
+      "Bulto Chico", "Bulto Mediano", "Bulto Grande"
+    ]
+  }
+};
 
 const Modal = ({ title, onClose, children }) => (<div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm"><div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden animate-fade-in-up max-h-[95vh] overflow-y-auto"><div className="bg-white p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 z-10 shadow-sm"><h3 className="font-bold text-xl text-gray-800">{title}</h3><button onClick={onClose} className="text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full transition"><X size={20}/></button></div><div className="p-8">{children}</div></div></div>);
 
@@ -44,13 +75,17 @@ const ImagePreview = ({ url, onClose }) => (
 const EditMoveModal = ({ moveData, onClose, onSuccess }) => {
   const [editingMove, setEditingMove] = useState({ ...moveData, taxType: moveData.taxType || 'retention' });
   const [tempItem, setTempItem] = useState({ name: '', quantity: 1 });
-  
-  // CORRECCIÓN 1: Ahora guardamos el nombre del campo (string) o null, no true/false
   const [deletingField, setDeletingField] = useState(null);
-  
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [expandedCategory, setExpandedCategory] = useState("Sala y Estancia");
 
-  useEffect(() => { setEditingMove({ ...moveData, taxType: moveData.taxType || 'retention' }); }, [moveData]);
+  useEffect(() => { 
+      let data = { ...moveData, taxType: moveData.taxType || 'retention' };
+      if (data.idUrl && !data.idUrlFront) {
+          data.idUrlFront = data.idUrl;
+      }
+      setEditingMove(data); 
+  }, [moveData]);
 
   const addFromCatalog = (itemLabel) => {
     const currentItems = [...(editingMove.items || [])];
@@ -91,48 +126,18 @@ const EditMoveModal = ({ moveData, onClose, onSuccess }) => {
 
   const handleDeleteDocument = async (fieldUrlName, fieldUrlValue) => {
     if (!window.confirm("¿Seguro que quieres eliminar este archivo?")) return;
-    
-    setDeletingField(fieldUrlName); // Activa el relojito
-    
-    // --- PASO 1: ELIMINACIÓN FANTASMA (SEGUNDO PLANO) ---
-    // Creamos una promesa aparte para el Storage pero NO ponemos 'await'
-    // Esto significa: "Intenta borrar el archivo mientras yo sigo trabajando"
+    setDeletingField(fieldUrlName); 
     const deleteFileTask = async () => {
-        try {
-            const storage = getStorage();
-            const fileRef = ref(storage, fieldUrlValue);
-            await deleteObject(fileRef);
-            console.log("Archivo físico eliminado en segundo plano.");
-        } catch (err) {
-            console.warn("El archivo físico no se pudo borrar (probablemente ya no existía), pero no importa.", err);
-        }
+        try { const storage = getStorage(); const fileRef = ref(storage, fieldUrlValue); await deleteObject(fileRef); } 
+        catch (err) { console.warn("Archivo físico no encontrado", err); }
     };
-    
-    // Ejecutamos la tarea pero no detenemos el código aquí
     deleteFileTask(); 
-
-    // --- PASO 2: ACTUALIZACIÓN DE BASE DE DATOS (PRIORIDAD) ---
     try {
         const docRef = doc(db, "moves", editingMove.id);
-        
-        // Esto tarda milisegundos
-        await updateDoc(docRef, { 
-            [fieldUrlName]: deleteField() 
-        });
-
-        // Actualizamos la pantalla inmediatamente
+        await updateDoc(docRef, { [fieldUrlName]: deleteField() });
         setEditingMove(prev => ({ ...prev, [fieldUrlName]: null }));
-        
-        // Opcional: Quitamos el alert para que sea aún más fluido
-        // alert("Documento eliminado."); 
-
-    } catch (error) { 
-        console.error(error); 
-        alert("Error al actualizar la base de datos."); 
-    } finally { 
-        // Detenemos el relojito inmediatamente
-        setDeletingField(null); 
-    }
+    } catch (error) { console.error(error); alert("Error al actualizar la base de datos."); } 
+    finally { setDeletingField(null); }
   };
 
   const handleUpdateMove = async (e) => {
@@ -149,6 +154,29 @@ const EditMoveModal = ({ moveData, onClose, onSuccess }) => {
   const inputClass = "w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-cadena-blue focus:bg-white transition text-sm";
   const labelClass = "block text-xs font-bold text-gray-500 uppercase mb-1.5";
 
+  // Helper para renderizar un bloque de documento
+  const DocumentBlock = ({ title, urlField, urlValue, colorClass, badgeColor }) => (
+    <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+        <div className="flex justify-between items-center mb-2">
+            <span className="text-xs font-bold text-gray-600">{title}</span>
+            {urlValue ? <span className={`text-[10px] ${badgeColor} px-2 py-0.5 rounded-full font-bold`}>CARGADO</span> : <span className="text-[10px] bg-red-50 text-red-400 px-2 py-0.5 rounded-full">PENDIENTE</span>}
+        </div>
+        {urlValue ? (
+            <div className="flex flex-col gap-2">
+                <div className="w-full h-24 bg-gray-100 rounded overflow-hidden flex items-center justify-center cursor-pointer border border-gray-200 hover:opacity-80 transition" onClick={() => setPreviewUrl(urlValue)}>
+                    <img src={urlValue} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+                <div className="flex gap-2">
+                    <button type="button" onClick={() => setPreviewUrl(urlValue)} className={`flex-1 ${colorClass} bg-opacity-10 text-xs font-bold py-2 rounded transition text-center flex items-center justify-center gap-2 hover:bg-opacity-20`}><Maximize2 size={14}/> VER</button>
+                    <button type="button" onClick={() => handleDeleteDocument(urlField, urlValue)} disabled={!!deletingField} className={`px-3 rounded transition flex items-center justify-center ${deletingField === urlField ? 'bg-gray-100 cursor-wait' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}>
+                      {deletingField === urlField ? (<div className="animate-spin h-3 w-3 border-2 border-gray-400 border-t-transparent rounded-full"></div>) : (<Trash2 size={14}/>)}
+                    </button>
+                </div>
+            </div>
+        ) : (<div className="text-xs text-gray-400 italic text-center py-2 border-t border-dashed border-gray-100 mt-2">Esperando archivo...</div>)}
+    </div>
+  );
+
   return (
     <>
       {previewUrl && <ImagePreview url={previewUrl} onClose={() => setPreviewUrl(null)} />}
@@ -156,6 +184,7 @@ const EditMoveModal = ({ moveData, onClose, onSuccess }) => {
       <Modal title={`Editor de Servicio: ${editingMove.folio}`} onClose={onClose}>
         <form onSubmit={handleUpdateMove} className="space-y-8">
           
+          {/* DATOS GENERALES */}
           <div className="border-b border-gray-100 pb-6">
             <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Datos Generales</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -176,6 +205,7 @@ const EditMoveModal = ({ moveData, onClose, onSuccess }) => {
             </div>
           </div>
 
+          {/* RUTA */}
           <div className="border-b border-gray-100 pb-6">
             <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Ruta Logística</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -184,53 +214,118 @@ const EditMoveModal = ({ moveData, onClose, onSuccess }) => {
             </div>
           </div>
 
+          {/* INVENTARIO (CON ALTURA CORREGIDA PARA CELULAR) */}
           <div className="border-b border-gray-100 pb-6">
-            <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Package size={18}/> Inventario</h3>
-            <div className="mb-6">
-              <p className="text-xs font-bold text-gray-400 mb-2">AGREGAR RÁPIDO:</p>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                  {FURNITURE_ITEMS.map((item) => (
-                    <button key={item.id} type="button" onClick={() => addFromCatalog(item.label)} className="flex flex-col items-center justify-center p-2 rounded-lg border border-gray-200 hover:border-cadena-blue hover:bg-blue-50 transition text-gray-500 hover:text-cadena-blue group bg-white">
-                        <div className="mb-1 group-hover:scale-110 transition-transform">{item.icon}</div>
-                        <span className="text-[9px] font-bold text-center leading-tight">{item.label}</span>
-                    </button>
-                  ))}
-              </div>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-xl space-y-2 border border-gray-100 max-h-60 overflow-y-auto mb-4">
-              {editingMove.items && editingMove.items.length > 0 ? (
-                editingMove.items.map((item, index) => (
-                <div key={index} className="flex items-center gap-3 bg-white p-2 rounded-lg shadow-sm border border-gray-100 text-sm">
-                    <input type="number" className="w-16 p-1 border border-gray-200 rounded text-center font-bold outline-none focus:border-cadena-blue" value={item.quantity} onChange={(e) => updateItemQuantity(index, e.target.value)} />
-                    <span className="flex-1 font-medium text-gray-700">{item.name}</span>
-                    <button type="button" onClick={() => removeItem(index)} className="text-red-300 hover:text-red-500 transition p-1"><Trash2 size={16}/></button>
+            <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2"><Package size={18}/> Inventario Detallado</h3>
+            
+            {/* AQUÍ ESTÁ EL CAMBIO CLAVE: md:h-[500px] h-auto */}
+            <div className="flex flex-col md:flex-row gap-6 md:h-[500px] h-auto">
+                
+                {/* SELECCIÓN IZQUIERDA */}
+                <div className="w-full md:w-1/2 flex flex-col h-full">
+                    <p className="text-xs font-bold text-gray-400 mb-2">CATÁLOGO POR CATEGORÍA:</p>
+                    <div className="flex-1 overflow-y-auto pr-2 space-y-2 border border-gray-100 rounded-lg p-2 bg-gray-50 h-64 md:h-auto">
+                        {Object.entries(FULL_CATALOG).map(([categoryName, data]) => (
+                            <div key={categoryName} className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                                <button 
+                                  type="button"
+                                  onClick={() => setExpandedCategory(expandedCategory === categoryName ? null : categoryName)}
+                                  className={`w-full flex justify-between items-center p-3 text-sm font-bold transition ${expandedCategory === categoryName ? 'bg-cadena-blue text-white' : 'hover:bg-gray-50 text-gray-700'}`}
+                                >
+                                    <div className="flex items-center gap-2">{data.icon} {categoryName}</div>
+                                    {expandedCategory === categoryName ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+                                </button>
+                                {expandedCategory === categoryName && (
+                                    <div className="p-2 grid grid-cols-1 gap-1 animate-fade-in">
+                                        {data.items.map((item, idx) => (
+                                            <button 
+                                              key={idx} 
+                                              type="button" 
+                                              onClick={() => addFromCatalog(item)}
+                                              className="text-left text-xs p-2 hover:bg-blue-50 hover:text-blue-700 rounded transition flex justify-between group border-b border-gray-50 last:border-0"
+                                            >
+                                                <span>{item}</span>
+                                                <span className="opacity-0 group-hover:opacity-100 font-bold bg-blue-100 px-1.5 rounded text-[10px]">+1</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* AGREGAR MANUAL */}
+                    <div className="mt-4 pt-2 border-t border-gray-200">
+                        <p className="text-xs font-bold text-gray-400 mb-1">¿NO ESTÁ EN LA LISTA?</p>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="flex gap-2 flex-1">
+                                <input type="number" className="w-16 p-2 border border-gray-200 rounded-lg text-sm text-center" placeholder="1" value={tempItem.quantity} onChange={e => setTempItem({...tempItem, quantity: Number(e.target.value)})} />
+                                <input type="text" className="flex-1 p-2 border border-gray-200 rounded-lg text-sm" placeholder="Ej. Estatua Gigante" value={tempItem.name} onChange={e => setTempItem({...tempItem, name: e.target.value})} />
+                            </div>
+                            <button type="button" onClick={addManualItem} className="bg-gray-800 text-white p-2 rounded-lg hover:bg-black transition flex items-center justify-center sm:w-10">
+                                <Plus size={18}/> <span className="sm:hidden ml-2 text-xs font-bold">AGREGAR</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                ))
-              ) : (<p className="text-center text-gray-400 text-xs py-4">Inventario vacío</p>)}
-            </div>
-            <div className="flex gap-3 bg-white p-3 rounded-xl border border-gray-200 items-center">
-                <span className="text-xs font-bold text-gray-400 whitespace-nowrap">OTRO:</span>
-                <input type="number" className="w-20 p-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-cadena-pink" placeholder="Cant." value={tempItem.quantity} onChange={e => setTempItem({...tempItem, quantity: Number(e.target.value)})} />
-                <input type="text" className="flex-1 p-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-cadena-pink" placeholder="Nombre..." value={tempItem.name} onChange={e => setTempItem({...tempItem, name: e.target.value})} />
-                <button type="button" onClick={addManualItem} className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-black transition flex items-center gap-1 text-xs font-bold"><Plus size={16}/> AGREGAR</button>
+
+                {/* LISTA DERECHA */}
+                <div className="w-full md:w-1/2 flex flex-col h-full bg-blue-50/30 rounded-xl border border-blue-100 p-4 h-64 md:h-auto">
+                    <p className="text-xs font-bold text-gray-400 mb-2 uppercase text-center">Lista de Carga ({editingMove.items?.reduce((acc, i) => acc + Number(i.quantity), 0) || 0} pzas)</p>
+                    <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+                        {editingMove.items && editingMove.items.length > 0 ? (
+                            editingMove.items.map((item, index) => (
+                            <div key={index} className="flex items-center gap-3 bg-white p-2.5 rounded-lg shadow-sm border border-gray-100 text-sm group">
+                                <input type="number" className="w-12 p-1 border border-gray-200 rounded text-center font-bold text-cadena-blue bg-blue-50 focus:bg-white transition outline-none" value={item.quantity} onChange={(e) => updateItemQuantity(index, e.target.value)} />
+                                <span className="flex-1 font-medium text-gray-700 leading-tight">{item.name}</span>
+                                <button type="button" onClick={() => removeItem(index)} className="text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded transition"><Trash2 size={15}/></button>
+                            </div>
+                            ))
+                        ) : (<div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60"><Package size={40} className="mb-2"/><p className="text-xs">Sin artículos</p></div>)}
+                    </div>
+                </div>
             </div>
           </div>
 
-          <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
+          {/* FINANCIEROS */}
+          <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
             <div className="flex justify-between items-center mb-4 text-cadena-blue">
               <div className="flex items-center gap-2"><Calculator size={20} /><h3 className="text-sm font-black uppercase tracking-widest">Desglose Financiero</h3></div>
               <button type="button" onClick={addFinancialConcept} className="text-xs bg-white border border-cadena-blue px-3 py-1 rounded-full hover:bg-blue-100 transition">+ Agregar Fila</button>
             </div>
-            <div className="space-y-2 mb-6">
+            
+            <div className="space-y-4 mb-6">
               {editingMove.financialItems && editingMove.financialItems.map((item, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2 items-start">
-                    <div className="col-span-6"><textarea className={`${inputClass} h-16 text-xs py-2`} placeholder="Descripción..." value={item.description} onChange={(e) => updateFinancialConcept(index, 'description', e.target.value)}/></div>
-                    <div className="col-span-2"><input type="number" className={`${inputClass} text-center`} placeholder="$0" value={item.cost} onChange={(e) => updateFinancialConcept(index, 'cost', e.target.value)}/></div>
-                    <div className="col-span-2"><input type="number" className={`${inputClass} text-center`} placeholder="1" value={item.quantity} onChange={(e) => updateFinancialConcept(index, 'quantity', e.target.value)}/></div>
-                    <div className="col-span-2 flex items-center justify-center h-full"><button type="button" onClick={() => removeFinancialConcept(index)} className="text-red-400 hover:text-red-600 bg-white p-2 rounded shadow-sm"><Trash2 size={16}/></button></div>
+                  <div key={index} className="bg-white p-3 rounded-xl border border-blue-100 shadow-sm">
+                      <div className="grid grid-cols-12 gap-3 items-end">
+                          
+                          {/* Descripción */}
+                          <div className="col-span-12 sm:col-span-6">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block sm:hidden">Descripción / Concepto</label>
+                              <textarea className={`${inputClass} h-12 py-2 text-xs resize-none`} placeholder="Descripción..." value={item.description} onChange={(e) => updateFinancialConcept(index, 'description', e.target.value)}/>
+                          </div>
+                          
+                          {/* Costo */}
+                          <div className="col-span-5 sm:col-span-3">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block sm:hidden">Costo</label>
+                              <input type="number" className={`${inputClass} text-center`} placeholder="$0" value={item.cost} onChange={(e) => updateFinancialConcept(index, 'cost', e.target.value)}/>
+                          </div>
+                          
+                          {/* Cantidad */}
+                          <div className="col-span-5 sm:col-span-2">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block sm:hidden">Cant.</label>
+                              <input type="number" className={`${inputClass} text-center`} placeholder="1" value={item.quantity} onChange={(e) => updateFinancialConcept(index, 'quantity', e.target.value)}/>
+                          </div>
+                          
+                          {/* Borrar */}
+                          <div className="col-span-2 sm:col-span-1">
+                              <button type="button" onClick={() => removeFinancialConcept(index)} className="w-full h-[46px] flex items-center justify-center text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition border border-red-100"><Trash2 size={18}/></button>
+                          </div>
+                      </div>
                   </div>
               ))}
             </div>
+
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 border-t border-blue-100 pt-4">
               <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Receipt size={18} className="text-gray-400"/>
@@ -253,60 +348,16 @@ const EditMoveModal = ({ moveData, onClose, onSuccess }) => {
             </div>
           </div>
 
+          {/* NOTAS Y DOCUMENTOS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div><label className={labelClass}>Notas / Observaciones</label><textarea className={`${inputClass} h-32 resize-none`} value={editingMove.notes || ''} onChange={e => setEditingMove({...editingMove, notes: e.target.value})} placeholder="Detalles importantes..." /></div>
             
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
               <h3 className="text-xs font-bold text-gray-500 uppercase mb-4 flex items-center gap-2"><UploadCloud size={16}/> Documentos del Cliente</h3>
               <div className="space-y-4">
-                  
-                  {/* INE */}
-                  <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                      <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs font-bold text-gray-600">IDENTIFICACIÓN (INE)</span>
-                          {editingMove.idUrl ? <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">CARGADO</span> : <span className="text-[10px] bg-red-50 text-red-400 px-2 py-0.5 rounded-full">PENDIENTE</span>}
-                      </div>
-                      {editingMove.idUrl ? (
-                          <div className="flex flex-col gap-2">
-                              <div className="w-full h-24 bg-gray-100 rounded overflow-hidden flex items-center justify-center cursor-pointer border border-gray-200 hover:opacity-80 transition" onClick={() => setPreviewUrl(editingMove.idUrl)}>
-                                  <img src={editingMove.idUrl} alt="INE Preview" className="w-full h-full object-cover" />
-                              </div>
-                              <div className="flex gap-2">
-                                  <button type="button" onClick={() => setPreviewUrl(editingMove.idUrl)} className="flex-1 bg-blue-50 text-blue-600 text-xs font-bold py-2 rounded hover:bg-blue-100 transition text-center flex items-center justify-center gap-2"><Maximize2 size={14}/> AMPLIAR</button>
-                                  
-                                  {/* CORRECCIÓN 4: Solo gira si deletingField === 'idUrl' */}
-                                  <button type="button" onClick={() => handleDeleteDocument('idUrl', editingMove.idUrl)} disabled={!!deletingField} className={`px-3 rounded transition flex items-center justify-center ${deletingField === 'idUrl' ? 'bg-gray-100 cursor-wait' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}>
-                                    {deletingField === 'idUrl' ? (<div className="animate-spin h-3 w-3 border-2 border-gray-400 border-t-transparent rounded-full"></div>) : (<Trash2 size={14}/>)}
-                                  </button>
-                              </div>
-                          </div>
-                      ) : (<div className="text-xs text-gray-400 italic text-center py-2 border-t border-dashed border-gray-100 mt-2">Esperando archivo...</div>)}
-                  </div>
-
-                  {/* DOMICILIO */}
-                  <div className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                      <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs font-bold text-gray-600">COMPROBANTE DOMICILIO</span>
-                          {editingMove.addressUrl ? <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold">CARGADO</span> : <span className="text-[10px] bg-red-50 text-red-400 px-2 py-0.5 rounded-full">PENDIENTE</span>}
-                      </div>
-                      {editingMove.addressUrl ? (
-                          <div className="flex flex-col gap-2">
-                              <div className="w-full h-24 bg-gray-100 rounded overflow-hidden flex items-center justify-center cursor-pointer border border-gray-200 hover:opacity-80 transition" onClick={() => setPreviewUrl(editingMove.addressUrl)}>
-                                  <img src={editingMove.addressUrl} alt="Domicilio Preview" className="w-full h-full object-cover" />
-                              </div>
-                              <div className="flex gap-2">
-                                  <button type="button" onClick={() => setPreviewUrl(editingMove.addressUrl)} className="flex-1 bg-purple-50 text-purple-600 text-xs font-bold py-2 rounded hover:bg-purple-100 transition text-center flex items-center justify-center gap-2"><Maximize2 size={14}/> AMPLIAR</button>
-                                  
-                                  {/* CORRECCIÓN 5: Solo gira si deletingField === 'addressUrl' */}
-                                  <button type="button" onClick={() => handleDeleteDocument('addressUrl', editingMove.addressUrl)} disabled={!!deletingField} className={`px-3 rounded transition flex items-center justify-center ${deletingField === 'addressUrl' ? 'bg-gray-100 cursor-wait' : 'bg-red-50 text-red-500 hover:bg-red-100'}`}>
-                                    {deletingField === 'addressUrl' ? (
-                                    <div className="animate-spin h-3 w-3 border-2 border-gray-400 border-t-transparent rounded-full"></div>) : (<Trash2 size={14}/>)}
-                                    </button>
-                              </div>
-                          </div>
-                      ) : (<div className="text-xs text-gray-400 italic text-center py-2 border-t border-dashed border-gray-100 mt-2">Esperando archivo...</div>)}
-                  </div>
-
+                  <DocumentBlock title="INE / ID (FRENTE)" urlField="idUrlFront" urlValue={editingMove.idUrlFront || editingMove.idUrl} colorClass="text-blue-600 bg-blue-600" badgeColor="bg-green-100 text-green-700" />
+                  <DocumentBlock title="INE / ID (REVERSO)" urlField="idUrlBack" urlValue={editingMove.idUrlBack} colorClass="text-blue-600 bg-blue-600" badgeColor="bg-green-100 text-green-700" />
+                  <DocumentBlock title="COMPROBANTE DOMICILIO" urlField="addressUrl" urlValue={editingMove.addressUrl} colorClass="text-purple-600 bg-purple-600" badgeColor="bg-purple-100 text-purple-700" />
               </div>
             </div>
           </div>

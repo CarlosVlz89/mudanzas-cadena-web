@@ -35,7 +35,6 @@ const Dashboard = () => {
   const [editingMove, setEditingMove] = useState(null);
   const [viewingId, setViewingId] = useState(null);
   
-  // ESTADO AMPLIADO PARA CREACIÓN MANUAL
   const [newMove, setNewMove] = useState({ 
     client: '', phone: '', origin: '', destination: '', date: '', price: '', notes: '' 
   });
@@ -58,6 +57,12 @@ const Dashboard = () => {
     alert("Enlace copiado."); 
   };
 
+  // Función para abrir contrato en nueva pestaña
+  const openContract = (move) => {
+    // Usamos el ID del movimiento para navegar
+    navigate(`/admin/ver-contrato/${move.id}`);
+  };
+
   const handleCreateMove = async (e) => {
     e.preventDefault();
     try {
@@ -68,24 +73,21 @@ const Dashboard = () => {
         if (counterSnap.exists()) { newCount = counterSnap.data().current + 1; }
         const folio = `MUD-${String(newCount).padStart(4, '0')}`;
         
-        // Calculamos financieros básicos basados en el precio total ingresado
         const precioTotal = Number(newMove.price) || 0;
-        // Si ingresa precio, asumimos que es el total. Ponemos el flete como el total para simplificar.
         const defaultFinancials = [
             { description: "FLETE Y MANIOBRAS", cost: precioTotal, quantity: 1 }
         ];
 
-        // Lógica de Status: Si pone precio y fecha, ya nace como "Programada". Si no, "Pendiente".
         const initialStatus = (precioTotal > 0 && newMove.date) ? 'Programada' : 'Pendiente';
 
         const newMoveRef = doc(collection(db, "moves"));
         transaction.set(newMoveRef, { 
           ...newMove, 
           folio: folio, 
-          status: initialStatus, // Status inteligente
-          items: [], // Inventario vacío por defecto
+          status: initialStatus, 
+          items: [], 
           price: precioTotal, 
-          subtotal: precioTotal, // Simplificado, luego se recalcula al editar
+          subtotal: precioTotal,
           iva: 0, 
           retention: 0, 
           financialItems: defaultFinancials, 
@@ -94,7 +96,6 @@ const Dashboard = () => {
         transaction.set(counterRef, { current: newCount });
       });
       setIsCreateModalOpen(false); 
-      // Limpiamos formulario
       setNewMove({ client: '', phone: '', origin: '', destination: '', date: '', price: '', notes: '' });
       alert("Registro creado con éxito.");
     } catch (error) { console.error("Error creando folio:", error); alert("Error al generar registro."); }
@@ -108,6 +109,18 @@ const Dashboard = () => {
   const readyToSign = sortMovesByFolio(moves.filter(m => (m.status === 'Pendiente' && m.idUrl && m.addressUrl) || m.status === 'Programada'));
   const activeMoves = sortMovesByFolio(moves.filter(m => ['Contrato Firmado', 'En Carga', 'En Tránsito'].includes(m.status)));
   const finishedMoves = sortMovesByFolio(moves.filter(m => m.status === 'Finalizada'));
+
+  // PROPS COMUNES PARA NO REPETIR CÓDIGO
+  const cardProps = (move) => ({
+    key: move.id,
+    move: move,
+    onEdit: () => setEditingMove(move),
+    onDelete: () => handleDelete(move.id),
+    onCopyLink: () => copyContractLink(move.id),
+    onViewId: () => setViewingId(move),
+    onViewContract: () => openContract(move), // <--- AQUÍ ESTÁ LA NUEVA FUNCIÓN
+    isPending: move.price === 0
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
@@ -127,7 +140,7 @@ const Dashboard = () => {
 
       <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* PESTAÑA 1: NUEVAS + BOTÓN DE CREAR */}
+        {/* PESTAÑA 1: NUEVAS */}
         {activeTab === 'cotizaciones' && (
           <div className="space-y-6 animate-fade-in">
             <div className="flex justify-between items-center">
@@ -136,9 +149,7 @@ const Dashboard = () => {
             </div>
             {newRequests.length === 0 ? <EmptyState msg="No hay solicitudes nuevas." /> : (
               <div className="grid gap-4">
-                {newRequests.map(move => (
-                  <MoveCard key={move.id} move={move} onEdit={() => setEditingMove(move)} onDelete={() => handleDelete(move.id)} onCopyLink={() => copyContractLink(move.id)} onViewId={() => setViewingId(move)} isPending={move.price === 0} />
-                ))}
+                {newRequests.map(move => <MoveCard {...cardProps(move)} />)}
               </div>
             )}
           </div>
@@ -157,9 +168,7 @@ const Dashboard = () => {
             <h2 className="text-2xl font-bold text-gray-700">Listos para Revisión y Firma</h2>
             {readyToSign.length === 0 ? <EmptyState msg="Nadie está esperando revisión." /> : (
               <div className="grid gap-4">
-                {readyToSign.map(move => (
-                  <MoveCard key={move.id} move={move} onEdit={() => setEditingMove(move)} onDelete={() => handleDelete(move.id)} onCopyLink={() => copyContractLink(move.id)} onViewId={() => setViewingId(move)} isPending={move.price === 0} />
-                ))}
+                {readyToSign.map(move => <MoveCard {...cardProps(move)} />)}
               </div>
             )}
           </div>
@@ -172,7 +181,10 @@ const Dashboard = () => {
             {activeMoves.length === 0 ? <EmptyState msg="Sin operaciones firmadas en curso." /> : (
               <div className="grid gap-4">
                 {activeMoves.map(move => (
-                  <MoveCard key={move.id} move={move} onEdit={() => setEditingMove(move)} onCopyLink={() => copyContractLink(move.id)} onDelete={() => handleDelete(move.id)} onViewId={() => setViewingId(move)} onPrintOrder={() => navigate(`/orden-carga/${move.id}`)} />
+                  <MoveCard 
+                    {...cardProps(move)} 
+                    onPrintOrder={() => navigate(`/orden-carga/${move.id}`)} 
+                  />
                 ))}
               </div>
             )}
@@ -186,7 +198,10 @@ const Dashboard = () => {
             {finishedMoves.length === 0 ? <EmptyState msg="Aún no hay mudanzas finalizadas." /> : (
               <div className="grid gap-4 opacity-80 hover:opacity-100 transition duration-300">
                 {finishedMoves.map(move => (
-                  <MoveCard key={move.id} move={move} onEdit={() => setEditingMove(move)} onCopyLink={() => copyContractLink(move.id)} onDelete={() => handleDelete(move.id)} onViewId={() => setViewingId(move)} onPrintOrder={() => navigate(`/orden-carga/${move.id}`)} />
+                  <MoveCard 
+                    {...cardProps(move)} 
+                    onPrintOrder={() => navigate(`/orden-carga/${move.id}`)} 
+                  />
                 ))}
               </div>
             )}
@@ -199,19 +214,58 @@ const Dashboard = () => {
       
       {viewingId && (
         <Modal title={`Documentación: ${viewingId.client}`} onClose={() => setViewingId(null)}>
-           <div className="grid grid-cols-1 gap-8">
-              <div><p className="font-black text-gray-400 mb-3 uppercase text-xs tracking-widest border-b pb-1">Identificación (INE):</p>{viewingId.idUrl ? <img src={viewingId.idUrl} className="w-full rounded-xl border shadow-sm" /> : <p className="text-gray-400 italic text-sm py-4 text-center bg-gray-50 rounded">No adjuntado</p>}</div>
-              <div><p className="font-black text-gray-400 mb-3 uppercase text-xs tracking-widest border-b pb-1">Comprobante de Domicilio:</p>{viewingId.addressUrl ? <img src={viewingId.addressUrl} className="w-full rounded-xl border shadow-sm" /> : <p className="text-gray-400 italic text-sm py-4 text-center bg-gray-50 rounded">No adjuntado</p>}</div>
+           <div className="space-y-6">
+              
+              {/* SECCIÓN IDENTIFICACIÓN (2 COLUMNAS) */}
+              <div>
+                  <p className="font-black text-gray-400 mb-3 uppercase text-xs tracking-widest border-b pb-1">Identificación Oficial (INE)</p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Lado Frente (Soporta registros viejos con 'idUrl') */}
+                      <div>
+                          <p className="text-[10px] font-bold text-gray-400 mb-1">FRENTE:</p>
+                          {viewingId.idUrlFront || viewingId.idUrl ? (
+                              <img src={viewingId.idUrlFront || viewingId.idUrl} className="w-full h-48 object-contain bg-gray-100 rounded-xl border shadow-sm" alt="INE Frente" />
+                          ) : (
+                              <div className="h-48 flex items-center justify-center bg-gray-50 text-gray-400 text-xs italic border-2 border-dashed rounded-xl">
+                                Sin imagen
+                              </div>
+                          )}
+                      </div>
+
+                      {/* Lado Reverso */}
+                      <div>
+                          <p className="text-[10px] font-bold text-gray-400 mb-1">REVERSO:</p>
+                          {viewingId.idUrlBack ? (
+                              <img src={viewingId.idUrlBack} className="w-full h-48 object-contain bg-gray-100 rounded-xl border shadow-sm" alt="INE Reverso" />
+                          ) : (
+                              <div className="h-48 flex items-center justify-center bg-gray-50 text-gray-400 text-xs italic border-2 border-dashed rounded-xl">
+                                Sin imagen
+                              </div>
+                          )}
+                      </div>
+                  </div>
+              </div>
+
+              {/* SECCIÓN DOMICILIO */}
+              <div>
+                  <p className="font-black text-gray-400 mb-3 uppercase text-xs tracking-widest border-b pb-1">Comprobante de Domicilio</p>
+                  {viewingId.addressUrl ? (
+                      <img src={viewingId.addressUrl} className="w-full max-h-80 object-contain bg-gray-100 rounded-xl border shadow-sm" alt="Domicilio" /> 
+                  ) : (
+                      <p className="text-gray-400 italic text-sm py-8 text-center bg-gray-50 rounded border-2 border-dashed">No adjuntado</p>
+                  )}
+              </div>
+
            </div>
         </Modal>
       )}
 
-      {/* --- MODAL DE CREACIÓN MANUAL (AMPLIADO) --- */}
+      {/* --- MODAL DE CREACIÓN MANUAL --- */}
       {isCreateModalOpen && (
         <Modal title="Nueva Mudanza Completa" onClose={() => setIsCreateModalOpen(false)}>
           <form onSubmit={handleCreateMove} className="space-y-4">
             
-            {/* Fila 1: Cliente y Teléfono */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 flex items-center gap-1"><UserIcon size={14}/> Nombre del Cliente</label>
@@ -223,7 +277,6 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Fila 2: Origen y Destino */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 flex items-center gap-1"><MapPin size={14} className="text-green-500"/> Origen</label>
@@ -235,7 +288,6 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Fila 3: Fecha y Precio */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 flex items-center gap-1"><Calendar size={14}/> Fecha Tentativa</label>
@@ -248,7 +300,6 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Notas */}
             <div>
                <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5">Notas / Observaciones</label>
                <textarea className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-cadena-blue transition text-sm h-20" placeholder="Ej. Casa de 3 pisos, volado, piano..." value={newMove.notes} onChange={e => setNewMove({...newMove, notes: e.target.value})} />
@@ -264,7 +315,6 @@ const Dashboard = () => {
   );
 };
 
-// Pequeño helper icon (si no existe User en lucide, usa UserIcon o el que tengas)
 const UserIcon = (props) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
 );

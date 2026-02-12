@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase'; 
-import { ArrowLeft, Printer, MapPin, Truck, User, Package, Calendar, Square } from 'lucide-react';
+import { ArrowLeft, Printer, MapPin, Truck, User, Package, Calendar, FileText } from 'lucide-react';
+import logo from '../../assets/images/logo.png'; 
 
 const PrintOrder = () => {
   const { id } = useParams();
@@ -39,6 +40,40 @@ const PrintOrder = () => {
     // CONFIGURACIÓN DE PÁGINA
     <div className="min-h-screen bg-gray-100 p-4 md:p-8 print:bg-white print:p-0 font-sans print:text-black">
       
+      {/* ESTILOS DE IMPRESIÓN */}
+      <style>
+        {`
+          @media print {
+            @page {
+              margin: 1cm; /* Margen físico seguro */
+              size: letter; /* Tamaño carta */
+            }
+            html, body {
+              margin: 0 !important;
+              padding: 0 !important;
+              height: auto !important;
+              overflow: visible !important;
+              background-color: white !important;
+            }
+            /* Ocultar elementos del navegador */
+            body > *:not(#root) {
+              display: none !important;
+            }
+            /* Asegurar que el contenido fluya */
+            #root {
+              width: 100% !important;
+              position: relative !important;
+              display: block !important;
+            }
+            /* Forzar fondo blanco y texto negro */
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          }
+        `}
+      </style>
+
       {/* BARRA DE NAVEGACIÓN */}
       <div className="max-w-4xl mx-auto mb-6 flex justify-between items-center print:hidden">
         <button 
@@ -57,13 +92,17 @@ const PrintOrder = () => {
       </div>
 
       {/* HOJA DE PAPEL */}
-      <div className="max-w-[21.5cm] mx-auto bg-white shadow-2xl p-8 md:p-10 rounded-xl print:shadow-none print:w-full print:max-w-none print:p-0 print:rounded-none print:m-0 flex flex-col min-h-[27.9cm]">
+      {/* Eliminamos alturas fijas y dejamos que fluya */}
+      <div className="max-w-[21.5cm] mx-auto bg-white shadow-2xl p-8 md:p-10 rounded-xl print:shadow-none print:w-full print:max-w-none print:p-0 print:rounded-none print:m-0 flex flex-col relative">
         
-        {/* ENCABEZADO */}
+        {/* ENCABEZADO CON LOGO */}
         <div className="flex justify-between items-end border-b-4 border-black pb-4 mb-6">
-          <div>
-            <h1 className="text-4xl font-black uppercase tracking-tighter text-black leading-none">Orden de Carga</h1>
-            <p className="text-gray-500 font-bold text-xs tracking-[0.3em] mt-1">MUDANZAS CADENA • LOGÍSTICA</p>
+          <div className="flex items-center gap-4">
+            <img src={logo} alt="Mudanzas Cadena" className="h-16 w-auto object-contain" />
+            <div>
+                <h1 className="text-4xl font-black uppercase tracking-tighter text-black leading-none">Orden de Carga</h1>
+                <p className="text-gray-500 font-bold text-xs tracking-[0.3em] mt-1">MUDANZAS CADENA • LOGÍSTICA</p>
+            </div>
           </div>
           <div className="text-right">
             <p className="text-[10px] text-gray-500 uppercase font-bold">Folio de Servicio</p>
@@ -77,16 +116,29 @@ const PrintOrder = () => {
 
         {/* DATOS GENERALES */}
         <div className="grid grid-cols-2 gap-6 mb-6 text-sm border-b border-gray-200 pb-6">
-          <div>
-            <div className="flex items-center gap-2 font-black text-black mb-2 uppercase text-xs tracking-wider">
-               <User size={14}/> Cliente / Contacto
+          
+          {/* COLUMNA IZQUIERDA */}
+          <div className="flex flex-col gap-4">
+            <div>
+                <div className="flex items-center gap-2 font-black text-black mb-2 uppercase text-xs tracking-wider">
+                   <User size={14}/> Cliente / Contacto
+                </div>
+                <div className="pl-2 border-l-2 border-cadena-blue">
+                   <p className="text-lg font-bold uppercase leading-tight">{move.client}</p>
+                   <p className="mt-0.5 text-gray-600 font-mono">{move.phone}</p>
+                </div>
             </div>
-            <div className="pl-2 border-l-2 border-cadena-blue">
-               <p className="text-lg font-bold uppercase leading-tight">{move.client}</p>
-               <p className="mt-0.5 text-gray-600 font-mono">{move.phone}</p>
+
+            <div className="bg-gray-50 border border-gray-300 rounded p-2 print:bg-white print:border-black">
+                <div className="flex items-center gap-1 mb-1 text-gray-500">
+                    <FileText size={10} />
+                    <p className="font-bold text-[9px] uppercase">Instrucciones de Oficina:</p>
+                </div>
+                <p className="uppercase text-xs font-bold text-black leading-snug">{move.notes || 'Sin instrucciones especiales.'}</p>
             </div>
           </div>
 
+          {/* COLUMNA DERECHA */}
           <div className="space-y-3">
              <div>
                 <h3 className="font-bold flex items-center gap-2 mb-0.5 text-[10px] text-gray-400 uppercase tracking-widest"><MapPin size={12}/> Origen</h3>
@@ -100,7 +152,7 @@ const PrintOrder = () => {
         </div>
 
         {/* INVENTARIO */}
-        <div className="mb-8 flex-grow">
+        <div className="mb-4">
           <div className="flex justify-between items-center mb-4 border-b border-black pb-1">
              <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2">
                 <Package size={16}/> Lista de Carga (Checklist)
@@ -109,12 +161,12 @@ const PrintOrder = () => {
           </div>
           
           {Array.isArray(move.items) && move.items.length > 0 ? (
-            <div className="columns-1 md:columns-2 print:columns-2 gap-x-12 gap-y-2">
+            <div className="columns-1 md:columns-3 print:columns-3 gap-x-6 gap-y-2">
               {move.items.map((item, idx) => (
-                <div key={idx} className="break-inside-avoid flex items-center gap-3 border-b border-gray-300 pb-2 mb-2 print:border-gray-400">
-                  <div className="w-5 h-5 border-2 border-black rounded-sm shrink-0 bg-white"></div>
-                  <span className="font-black text-xl text-black min-w-[1.5rem] text-center">{item.quantity}</span>
-                  <span className="leading-tight uppercase text-sm font-bold text-gray-800 pt-0.5">{item.name}</span>
+                <div key={idx} className="break-inside-avoid flex items-center gap-2 border-b border-gray-300 pb-1 mb-1 print:border-gray-400">
+                  <div className="w-4 h-4 border-2 border-black rounded-sm shrink-0 bg-white"></div>
+                  <span className="font-black text-sm text-black min-w-[1.2rem] text-center">{item.quantity}</span>
+                  <span className="leading-tight uppercase text-[10px] font-bold text-gray-800 pt-0.5">{item.name}</span>
                 </div>
               ))}
             </div>
@@ -125,24 +177,8 @@ const PrintOrder = () => {
           )}
         </div>
 
-        {/* SECCIÓN DE NOTAS Y FIRMAS (AL PIE DE PÁGINA) */}
-        <div className="mt-auto break-inside-avoid">
-           
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {/* 1. NOTAS DEL SISTEMA (Pequeñas, informativas) */}
-              <div className="border border-gray-300 p-2 rounded bg-gray-50 print:bg-white print:border-black">
-                  <p className="font-bold text-[10px] uppercase text-gray-500 mb-1">Instrucciones de Oficina:</p>
-                  <p className="uppercase text-xs font-bold text-black">{move.notes || 'Sin instrucciones especiales.'}</p>
-              </div>
-
-              {/* 2. NOTAS DEL OPERADOR (Grande y vacía para escribir) */}
-              <div className="border-2 border-gray-300 p-2 rounded bg-white print:border-black h-24">
-                  <p className="font-bold text-[10px] uppercase text-gray-400 mb-1">Observaciones / Incidencias (Operador):</p>
-                  {/* Espacio vacío para escribir a mano */}
-              </div>
-           </div>
-
-           {/* FIRMAS */}
+        {/* FIRMAS (CON MARGEN SUPERIOR PARA SEPARARLAS) */}
+        <div className="mt-12 break-inside-avoid border-t-2 border-gray-100 pt-4 print:border-none">
            <div className="flex justify-between items-end text-center text-xs font-bold uppercase gap-8">
               <div className="w-1/2 border-t-2 border-black pt-2">
                  <p>Firma Operador</p>
