@@ -6,6 +6,7 @@ import {
   ChevronDown, ChevronUp, Sofa, Utensils, BedDouble, 
   UploadCloud, Briefcase, Box, Package, CarFront
 } from 'lucide-react'; 
+import PrivacyModal from '../../components/layout/PrivacyModal';
 
 // --- CATÁLOGO UNIFICADO ---
 const FULL_CATALOG = {
@@ -71,6 +72,7 @@ const Booking = () => {
   const [step, setStep] = useState(1); 
   const [loading, setLoading] = useState(false); 
   const [successId, setSuccessId] = useState(null); 
+  const [showPrivacy, setShowPrivacy] = useState(false);
    
   const [form, setForm] = useState({ 
     client: '', phone: '', date: '',  
@@ -416,6 +418,19 @@ const Booking = () => {
                     value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} /> 
                 </div> 
 
+                {/* --- AVISO LEGAL --- */}
+                <div className="text-[10px] text-center text-gray-500 pt-4 px-4 leading-tight">
+                  Al solicitar esta cotización, aceptas nuestro{' '}
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPrivacy(true)}
+                    className="font-bold text-cadena-blue underline hover:text-cadena-dark transition"
+                  >
+                    Aviso de Privacidad
+                  </button>
+                  {' '}y el tratamiento de tus datos para fines del servicio.
+                </div>
+
                 <div className="flex flex-col sm:flex-row gap-4 pt-4"> 
                   <button type="button" onClick={() => setStep(1)} className="flex items-center justify-center gap-2 px-8 py-4 text-gray-400 font-black text-xs uppercase tracking-widest hover:text-cadena-dark transition"> 
                     <ArrowLeft size={16} /> Atrás 
@@ -429,6 +444,7 @@ const Booking = () => {
           </form> 
         </div> 
       </div> 
+      <PrivacyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
     </div> 
   ); 
 }; 

@@ -1,14 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; 
+import { Link, useLocation } from 'react-router-dom'; // 1. Importamos useLocation
 import mascota from '../../assets/images/mascota.png'; 
 
 const FloatingMascot = () => {
+  const { pathname } = useLocation(); // 2. Obtenemos la ruta actual
   const [isVisible, setIsVisible] = useState(false);
 
+  // 3. LISTA NEGRA: Aquí pones las rutas donde NO quieres que salga
+  const hiddenRoutes = ['/cotizar', '/rastreo'];
+
+  // Si la ruta actual está en la lista negra, no renderizamos nada (return null)
+  const shouldHide = hiddenRoutes.includes(pathname);
+
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    // Solo activamos la animación si NO debemos escondernos
+    if (!shouldHide) {
+      const timer = setTimeout(() => setIsVisible(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldHide]); // Agregamos shouldHide a la dependencia
+
+  // 4. EL PASO MÁGICO: Si debe esconderse, retornamos null (no dibuja nada)
+  if (shouldHide) return null;
 
   return (
     <Link
@@ -26,10 +39,6 @@ const FloatingMascot = () => {
       </div>
 
       {/* 2. LA MASCOTA */}
-      {/* CAMBIO AQUÍ: 
-          - w-20 h-20: Celular (mantiene tamaño decente)
-          - md:w-32 md:h-32: Computadora (Crece bastante para destacar) 
-      */}
       <div className="relative w-20 h-20 md:w-32 md:h-32 transition-all duration-300">
         
         {/* Efecto de 'Aura' */}

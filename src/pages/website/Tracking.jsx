@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore'; 
+import { collection, query, where, getDocs, limit } from 'firebase/firestore'; 
 import { db } from '../../config/firebase'; 
 import { Search, MapPin, Truck, Package, AlertCircle, ArrowRight, Home, Phone } from 'lucide-react'; 
-import mascota from '../../assets/images/mascota.png'; 
+import mascota from '../../assets/images/mascota.png';
 
 const Tracking = () => {
   const [folio, setFolio] = useState('');
@@ -24,7 +24,8 @@ const Tracking = () => {
       const q = query(
         collection(db, "moves"), 
         where("folio", "==", folio.trim().toUpperCase()),
-        where("phone", "==", phone.trim())
+        where("phone", "==", phone.trim()),
+        limit(1)
       );
       
       const querySnapshot = await getDocs(q);
